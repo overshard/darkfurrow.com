@@ -1,0 +1,9 @@
+services:
+  web:
+    container_name: darkfurrow.com
+    build: .
+    env_file: .env
+    ports:
+      - "127.0.0.1:${PORT}:${PORT}"
+    command: python3 -m http.server ${PORT} --directory site
+    restart: unless-stopped
