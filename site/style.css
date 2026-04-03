@@ -9,6 +9,9 @@
   --moss: #5a7d4a;
   --ember: #b07a50;
   --glow: rgba(140,100,50,0.04);
+  --under1: rgba(26,23,20,0.7);
+  --under2: rgba(42,36,32,0.5);
+  --under3: rgba(26,23,20,0.4);
 }
 
 * {
@@ -38,8 +41,15 @@ main {
 
 header {
   margin-bottom: 4rem;
-  border-bottom: 1px solid var(--bark);
+  border-bottom: none;
   padding-bottom: 2rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 h1 {
@@ -47,20 +57,29 @@ h1 {
   font-weight: 400;
   letter-spacing: 0.04em;
   color: var(--parchment);
-  margin-bottom: 0.3rem;
 }
 
 .subtitle {
   font-style: italic;
   color: var(--ash);
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   animation: breathe 8s ease-in-out infinite;
+}
+
+.date-line {
+  color: var(--ash);
+  font-size: 0.8rem;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  margin-top: 0.6rem;
+  margin-bottom: 0.2rem;
 }
 
 .season {
   margin-bottom: 3rem;
   padding: 1.5rem 0;
-  border-bottom: 1px solid var(--bark);
+  border-bottom: none;
+  transition: opacity 0.4s ease;
 }
 
 .season-name {
@@ -81,10 +100,72 @@ h1 {
   line-height: 1.8;
 }
 
+.haiku {
+  margin-bottom: 3rem;
+  padding: 0.8rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.4s ease;
+}
+
+.haiku blockquote {
+  color: var(--ash);
+  font-style: italic;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+}
+
+.haiku .haiku-line {
+  display: block;
+}
+
+.haiku .haiku-line:nth-child(2) {
+  padding-left: 1rem;
+}
+
+.haiku .haiku-line:nth-child(3) {
+  padding-left: 2rem;
+}
+
+.haiku cite {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--bark);
+  font-size: 0.72rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+
+.weather-mood {
+  margin-bottom: 3rem;
+  padding: 1.2rem 0;
+  border-bottom: none;
+  transition: opacity 0.4s ease;
+}
+
+.weather-mood h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ember);
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.02em;
+  transition: color 2s ease;
+}
+
+.weather-mood p {
+  color: var(--ash);
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.9;
+}
+
 .sky {
   margin-bottom: 3rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--bark);
+  border-bottom: none;
+  transition: opacity 0.4s ease;
 }
 
 .sky h2 {
@@ -106,6 +187,19 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 2.8rem;
+  transition: opacity 0.4s ease;
+}
+
+.almanac .entry + .entry::before {
+  content: '*';
+  display: block;
+  text-align: center;
+  color: var(--bark);
+  font-size: 0.9rem;
+  letter-spacing: 0.5em;
+  margin-bottom: 2.8rem;
+  opacity: 0;
+  animation: word-in 0.3s ease-out forwards;
 }
 
 .entry h2 {
@@ -135,6 +229,8 @@ h1 {
   line-height: 1.9;
   padding-left: 1.2rem;
   position: relative;
+  opacity: 0;
+  animation: word-in 0.3s ease-out forwards;
 }
 
 .entry ul li::before {
@@ -151,10 +247,52 @@ h1 {
 .entry ul li:nth-child(3n)::before { animation-delay: -2.7s; }
 .entry ul li:nth-child(5n)::before { animation-delay: -0.6s; }
 
+.seasons-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  margin-top: 1rem;
+}
+
+.seasons-nav a {
+  color: var(--bark);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0;
+  transition: color 0.6s ease;
+  cursor: pointer;
+  opacity: 0;
+  animation: word-in 0.4s ease-out forwards;
+}
+
+.seasons-nav a:hover {
+  color: var(--ash);
+}
+
+.seasons-nav a.active {
+  color: var(--sprout);
+}
+
+.seasons-nav a.return-now {
+  color: var(--ember);
+}
+
+.seasons-nav a::after {
+  content: ' \00b7';
+  color: var(--bark);
+}
+
+.seasons-nav a:last-child::after {
+  content: '';
+}
+
 footer {
-  margin-top: 4rem;
+  margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--bark);
+  border-top: none;
+  transition: opacity 0.4s ease;
 }
 
 footer p {
@@ -170,57 +308,28 @@ footer p {
   animation: word-in 0.3s ease-out forwards;
 }
 
-/* daylight glow */
+/* daylight layer */
 
-body::before {
-  content: '';
+#sky-layer {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 0%, var(--glow) 0%, transparent 70%);
-  transition: background 3s ease;
-  z-index: 9999;
+  z-index: 9998;
+  transition: background 4s ease;
 }
 
-/* time-of-day ambient */
-
-body[data-time="dawn"]::after {
-  content: '';
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30vh;
-  pointer-events: none;
-  background: linear-gradient(to top, rgba(180,120,60,0.03) 0%, transparent 100%);
-  z-index: 9999;
-}
-
-body[data-time="evening"]::after {
-  content: '';
+#time-layer {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 40vh;
+  height: 120px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(160,80,30,0.04) 0%, transparent 100%);
   z-index: 9999;
-}
-
-body[data-time="night"]::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.15) 100%);
-  z-index: 9999;
+  transition: background 4s ease;
 }
 
 ::selection {
