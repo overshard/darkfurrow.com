@@ -3,22 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>dark furrow</title>
-  <meta name="description" content="old knowledge preserved">
+  <title>dark furrow / old knowledge preserved</title>
+  <meta name="description" content="a seasonal almanac of planting, harvest, moon phases, and forgotten rhythms. what to grow, what to cook, what the sky is doing. tended by hand for zone 7a.">
+  <meta name="author" content="isaac bythewood">
+  <meta name="theme-color" content="#0e0c0a">
+  <meta name="color-scheme" content="dark">
+
+  <!-- open graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://darkfurrow.com">
+  <meta property="og:title" content="dark furrow">
+  <meta property="og:description" content="old knowledge preserved. a seasonal almanac of planting, harvest, moon phases, and the quiet rhythms the modern world forgot.">
+  <meta property="og:site_name" content="dark furrow">
+  <meta property="og:locale" content="en_US">
+
+  <!-- twitter / x -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="dark furrow">
+  <meta name="twitter:description" content="old knowledge preserved. what to plant, what to cook, what the moon is doing. an almanac that breathes with the season and the hour.">
+
+  <!-- misc -->
+  <meta name="robots" content="index, follow">
+  <meta name="generator" content="hand and soil">
+  <link rel="canonical" href="https://darkfurrow.com">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
+  <div id="sky-layer"></div>
+  <div id="time-layer"></div>
+
   <main>
     <header>
-      <h1>dark furrow</h1>
-      <p class="subtitle">old knowledge preserved</p>
+      <div class="title-row">
+        <h1>dark furrow</h1>
+        <p class="subtitle">old knowledge preserved</p>
+      </div>
+      <p class="date-line"></p>
+      <nav class="seasons-nav"></nav>
     </header>
+
+    <section class="haiku">
+      <blockquote></blockquote>
+      <cite></cite>
+    </section>
 
     <section class="season">
       <p class="season-name"></p>
       <p class="season-note"></p>
+    </section>
+
+    <section class="weather-mood">
+      <h2>the air today</h2>
+      <p></p>
     </section>
 
     <section class="sky">
