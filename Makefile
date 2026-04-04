@@ -1,7 +1,7 @@
 .PHONY: run push
 
 run:
-	python3 -m http.server 8000 --directory site
+	uv run flask --app app run --host 0.0.0.0 --port 8000 --debug
 
 push:
 	git push origin master
