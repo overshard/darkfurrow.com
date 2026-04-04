@@ -1,6 +1,5 @@
 :root {
   --earth: #0e0c0a;
-  --loam: #1a1714;
   --bark: #2a2420;
   --ash: #a89b8e;
   --bone: #d4c8b8;
@@ -276,6 +275,14 @@ main {
 
 .seasons-nav a.active {
   color: var(--sprout);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.seasons-nav a:focus-visible,
+.times-nav a:focus-visible {
+  outline: 1px solid var(--ember);
+  outline-offset: 2px;
 }
 
 .seasons-nav a.return-now {
@@ -366,6 +373,8 @@ main {
 
 .times-nav a.active {
   color: var(--sprout);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .times-nav a.return-now {

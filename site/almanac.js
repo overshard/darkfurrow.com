@@ -9,6 +9,10 @@
 
   var LAT = 35.78; // north carolina, zone 7a
 
+  var ANIM_WORD_DELAY = 18;
+  var ANIM_LIST_DELAY = 60;
+  var ANIM_NAV_DELAY = 80;
+
 
   // --- time and season ---
 
@@ -54,11 +58,11 @@
 
   // which content categories belong to each time of day
   var TIME_CONTENT = {
-    night:     ['sky/', 'names/', 'remedies/'],
+    night:     ['sky/', 'names/', 'remedies/', 'storms/'],
     dawn:      ['planting/', 'foraging/'],
     morning:   ['planting/', 'chores/', 'bugs/'],
     afternoon: ['kitchen/', 'bugs/', 'chores/'],
-    evening:   ['kitchen/', 'remedies/', 'foraging/', 'names/']
+    evening:   ['kitchen/', 'remedies/', 'foraging/', 'names/', 'storms/']
   };
 
   var TIME_LABELS = ['night', 'dawn', 'morning', 'afternoon', 'evening'];
@@ -317,7 +321,8 @@
 
   function daylight(date, lat) {
     var doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
-    var decl = 23.45 * Math.sin((2 * Math.PI / 365) * (doy - 81));
+    var yearLen = new Date(date.getFullYear(), 1, 29).getDate() === 29 ? 366 : 365;
+    var decl = 23.45 * Math.sin((2 * Math.PI / yearLen) * (doy - 81));
     var cosH = -Math.tan(lat * Math.PI / 180) * Math.tan(decl * Math.PI / 180);
     cosH = Math.max(-1, Math.min(1, cosH));
     return (2 * Math.acos(cosH) * 180 / Math.PI) / 15;
@@ -381,6 +386,8 @@
     yesterday.setDate(yesterday.getDate() - 1);
     var gained = ((hours - daylight(yesterday, LAT)) * 60).toFixed(1);
     var sign = gained > 0 ? '+' : '';
+    var sunrise = 12 - hours / 2;
+    var sunset = 12 + hours / 2;
 
     var lines = [];
 
@@ -389,17 +396,17 @@
       lines.push('the world is turned away from the sun.');
       lines.push(formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
     } else if (time === 'dawn') {
-      lines.push('the sun is finding the edge of things.');
+      lines.push('the sun rises around ' + formatHM(sunrise) + '.');
       lines.push('the moon is ' + name + ', ' + illum + '% lit.');
-      lines.push(formatHM(hours) + ' of daylight ahead.');
+      lines.push(formatHM(hours) + ' of daylight ahead. it sets around ' + formatHM(sunset) + '.');
     } else if (time === 'evening') {
-      lines.push('the light is going.');
+      lines.push('the sun set around ' + formatHM(sunset) + '.');
       lines.push('the moon is ' + name + ', ' + illum + '% lit.');
       lines.push('there were ' + formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
     } else {
       lines.push('the moon is ' + name + ', ' + illum + '% lit.');
-      lines.push(formatHM(hours) + ' of daylight today.');
-      lines.push(sign + gained + ' minutes from yesterday, quietly.');
+      lines.push('the sun rose around ' + formatHM(sunrise) + ' and sets around ' + formatHM(sunset) + '.');
+      lines.push(formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
     }
 
     return lines.join('\n');
@@ -506,7 +513,7 @@
     var delay = 0;
     allItems.forEach(function (item) {
       item.style.animationDelay = delay + 'ms';
-      delay += item.tagName === 'LI' ? 60 : 18;
+      delay += item.tagName === 'LI' ? ANIM_LIST_DELAY : ANIM_WORD_DELAY;
     });
   }
 
@@ -518,6 +525,29 @@
   var cachedManifest = null;
   var naturalSeason = null;
   var naturalTime = null;
+
+  // cached DOM references
+  var dom = {};
+  function cacheDOM() {
+    dom.dateLine = document.querySelector('.date-line');
+    dom.seasonName = document.querySelector('.season-name');
+    dom.seasonNote = document.querySelector('.season-note');
+    dom.haikuBlock = document.querySelector('.hero-haiku blockquote');
+    dom.haikuCite = document.querySelector('.hero-haiku cite');
+    dom.moonGlyph = document.querySelector('.moon-glyph');
+    dom.moonGardenTip = document.querySelector('.moon-garden-tip');
+    dom.weatherMoodText = document.querySelector('.weather-mood-text');
+    dom.skyData = document.querySelector('.sky-data');
+    dom.glossaryNote = document.querySelector('.glossary-note');
+    dom.footerP = document.querySelector('footer p');
+    dom.wisdom = document.querySelector('.wisdom');
+    dom.almanac = document.querySelector('.glossary-entries');
+    dom.hero = document.querySelector('.hero');
+    dom.glossary = document.querySelector('.glossary');
+    dom.footer = document.querySelector('footer');
+    dom.seasonsNav = document.querySelector('.seasons-nav');
+    dom.timesNav = document.querySelector('.times-nav');
+  }
 
   function loadContent(seasonOverride, timeOverride) {
     var now = new Date();
@@ -531,43 +561,45 @@
     applyDaylightCycle(realTime, season);
 
     // date line
-    document.querySelector('.date-line').textContent = writtenDate(now);
+    dom.dateLine.textContent = writtenDate(now);
 
     // season header
-    document.querySelector('.season-name').textContent = season.label;
-    document.querySelector('.season-note').innerHTML = season.note.replace(/\n/g, '<br>');
+    dom.seasonName.textContent = season.label;
+    var noteHTML = season.note.replace(/\n/g, '<br>');
+    var next = daysUntilNextSeason(now);
+    if (next.days <= 7) {
+      noteHTML += '<br>' + next.label + ' begins in ' + next.days + (next.days === 1 ? ' day.' : ' days.');
+    }
+    dom.seasonNote.innerHTML = noteHTML;
 
     // haiku
     var haiku = getHaiku(season);
-    var haikuBlock = document.querySelector('.hero-haiku blockquote');
-    var haikuCite = document.querySelector('.hero-haiku cite');
     if (haiku) {
       var haikuLines = haiku.lines[0].split('\n');
-      haikuBlock.innerHTML = haikuLines.map(function (l) {
+      dom.haikuBlock.innerHTML = haikuLines.map(function (l) {
         return '<span class="haiku-line">' + l + '</span>';
       }).join('');
-      haikuCite.textContent = '';
+      dom.haikuCite.textContent = '— ' + haiku.author;
     }
 
     // moon glyph — large, standalone
     var phase = moonPhase(now);
-    document.querySelector('.moon-glyph').textContent = moonGlyph(phase);
+    dom.moonGlyph.textContent = moonGlyph(phase);
 
     // moon gardening tip
-    document.querySelector('.moon-garden-tip').textContent = moonGardenTip(phase);
+    dom.moonGardenTip.textContent = moonGardenTip(phase);
 
     // weather mood
-    document.querySelector('.weather-mood-text').textContent = getWeatherMood(season, contentTime);
+    dom.weatherMoodText.textContent = getWeatherMood(season, contentTime);
 
     // sky data
-    document.querySelector('.sky-data').innerHTML = skyText(now, contentTime).replace(/\n/g, '<br>');
+    dom.skyData.innerHTML = skyText(now, contentTime).replace(/\n/g, '<br>');
 
     // glossary note
-    document.querySelector('.glossary-note').textContent = 'what the ' + contentTime + ' brings';
+    dom.glossaryNote.textContent = 'what the ' + contentTime + ' brings';
 
     // footer countdown
-    var next = daysUntilNextSeason(now);
-    document.querySelector('footer p').textContent =
+    dom.footerP.textContent =
       next.days + ' days until ' + next.label + ' \u00b7 zone 7a \u00b7 north carolina';
 
     // crossfade: fade out content areas, then rebuild
@@ -601,14 +633,15 @@
         return Promise.all(relevant.map(function (entry) {
           return fetch('/data/' + entry.path)
             .then(function (r) { return r.text(); })
-            .then(function (text) { return parseFrontmatter(text); });
-        }));
+            .then(function (text) { return parseFrontmatter(text); })
+            .catch(function () { return null; });
+        })).then(function (results) {
+          return results.filter(function (r) { return r !== null; });
+        });
       })
       .then(function (entries) {
-        var wisdom = document.querySelector('.wisdom');
-        var almanac = document.querySelector('.glossary-entries');
-        wisdom.innerHTML = '';
-        almanac.innerHTML = '';
+        dom.wisdom.innerHTML = '';
+        dom.almanac.innerHTML = '';
 
         entries.forEach(function (entry) {
           var div = document.createElement('div');
@@ -633,9 +666,9 @@
           }
 
           if (entry.meta.time) {
-            wisdom.appendChild(div);
+            dom.wisdom.appendChild(div);
           } else {
-            almanac.appendChild(div);
+            dom.almanac.appendChild(div);
           }
         });
 
@@ -645,13 +678,20 @@
           if (el) el.style.opacity = '1';
         });
 
-        revealWords(document.querySelector('.hero'));
-        revealWords(document.querySelector('.glossary'));
-        revealWords(document.querySelector('footer'));
+        revealWords(dom.hero);
+        revealWords(dom.glossary);
+        revealWords(dom.footer);
 
         // update navs
         updateNav(season);
         updateTimeNav(contentTime);
+      })
+      .catch(function () {
+        dom.almanac.innerHTML = '<p style="color:var(--ash);font-style:italic;text-align:center;">the pages could not be found. try again in a moment.</p>';
+        fadeTargets.forEach(function (sel) {
+          var el = document.querySelector(sel);
+          if (el) el.style.opacity = '1';
+        });
       });
   }
 
@@ -666,8 +706,7 @@
   });
 
   function updateNav(activeSeason) {
-    var nav = document.querySelector('.seasons-nav');
-    nav.innerHTML = '';
+    dom.seasonsNav.innerHTML = '';
     var delay = 0;
 
     seasonOrder.forEach(function (s) {
@@ -675,14 +714,15 @@
       a.textContent = s.label;
       if (s.name === activeSeason.name) {
         a.className = 'active';
+        a.setAttribute('aria-current', 'true');
       }
       a.style.animationDelay = delay + 'ms';
-      delay += 80;
+      delay += ANIM_NAV_DELAY;
       a.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         loadContent(s, currentTimeOverride);
       });
-      nav.appendChild(a);
+      dom.seasonsNav.appendChild(a);
     });
 
     if (activeSeason.name !== naturalSeason.name) {
@@ -694,14 +734,13 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
         loadContent(null, currentTimeOverride);
       });
-      nav.appendChild(ret);
+      dom.seasonsNav.appendChild(ret);
     }
   }
 
   function updateTimeNav(activeTime) {
-    var nav = document.querySelector('.times-nav');
-    if (!nav) return;
-    nav.innerHTML = '';
+    if (!dom.timesNav) return;
+    dom.timesNav.innerHTML = '';
     var delay = 0;
 
     TIME_LABELS.forEach(function (t) {
@@ -709,13 +748,14 @@
       a.textContent = t;
       if (t === activeTime) {
         a.className = 'active';
+        a.setAttribute('aria-current', 'true');
       }
       a.style.animationDelay = delay + 'ms';
-      delay += 80;
+      delay += ANIM_NAV_DELAY;
       a.addEventListener('click', function () {
         loadContent(currentSeason === naturalSeason ? null : currentSeason, t);
       });
-      nav.appendChild(a);
+      dom.timesNav.appendChild(a);
     });
 
     if (currentTimeOverride && currentTimeOverride !== naturalTime) {
@@ -726,14 +766,34 @@
       ret.addEventListener('click', function () {
         loadContent(currentSeason === naturalSeason ? null : currentSeason, null);
       });
-      nav.appendChild(ret);
+      dom.timesNav.appendChild(ret);
     }
   }
 
   // initial render
+  cacheDOM();
   var now = new Date();
   naturalSeason = getSeason(now);
   naturalTime = getTimeOfDay(now);
   loadContent(null);
+
+  // auto-refresh when time of day or season changes
+  setInterval(function () {
+    var check = new Date();
+    var newTime = getTimeOfDay(check);
+    var newSeason = getSeason(check);
+    if (newTime !== naturalTime || newSeason.name !== naturalSeason.name) {
+      naturalTime = newTime;
+      naturalSeason = newSeason;
+      if (!currentTimeOverride) {
+        loadContent(currentSeason === naturalSeason ? null : currentSeason, null);
+      }
+    }
+  }, 60000);
+
+  // register service worker for offline access
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
 
 })();
