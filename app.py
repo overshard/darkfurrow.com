@@ -6,6 +6,7 @@ the root that holds the page together.
 
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, render_template, request
 
@@ -19,14 +20,14 @@ DATA = load_data(DATA_DIR)
 
 @app.route('/')
 def index():
-    now = datetime.now()
+    now = datetime.now(ZoneInfo('America/New_York'))
     content = assemble_content(now, DATA)
     return render_template('index.html', **content)
 
 
 @app.route('/api/content')
 def api_content():
-    now = datetime.now()
+    now = datetime.now(ZoneInfo('America/New_York'))
     season_override = request.args.get('season')
     time_override = request.args.get('time')
     content = assemble_content(
