@@ -1,16 +1,14 @@
 // service worker for dark furrow
 // the almanac should work like a book you own, not a service you rent.
 
-var CACHE_NAME = 'dark-furrow-v1';
+var CACHE_NAME = 'dark-furrow-v2';
 
 var CORE_ASSETS = [
   '/',
-  '/index.html',
-  '/style.css',
-  '/almanac.js',
-  '/favicon.svg',
-  '/og.svg',
-  '/data/manifest.json'
+  '/static/style.css',
+  '/static/almanac.js',
+  '/static/favicon.svg',
+  '/static/og.svg'
 ];
 
 self.addEventListener('install', function (event) {
@@ -39,7 +37,6 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   event.respondWith(
     fetch(event.request).then(function (response) {
-      // cache successful responses for offline use
       if (response.ok) {
         var clone = response.clone();
         caches.open(CACHE_NAME).then(function (cache) {

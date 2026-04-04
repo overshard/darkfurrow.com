@@ -20,12 +20,28 @@ page that breathes with the seasons.
 
 ## Technical notes
 
-- No frameworks unless absolutely necessary. Prefer plain HTML, CSS, and
-  vanilla JavaScript.
-- No build steps if possible. Just files that work.
-- The site will live at darkfurrow.com.
+- Flask backend with Jinja2 templates. Python handles all content
+  assembly, calculations, and markdown rendering (via mistune).
+- Client-side JavaScript is for presentation only: color palette,
+  animations, navigation interactions, and auto-refresh.
+- Dependencies managed with uv. See pyproject.toml.
+- All content data lives in markdown files under data/. No hardcoded
+  content in Python code.
+- `make run` starts the Flask dev server on 0.0.0.0:8000.
+- The site lives at darkfurrow.com.
 - Target planting zone is 7a (North Carolina) to start, but the structure
   should allow for expansion to other zones later.
+
+## Development tools
+
+- Playwright MCP is available for browser testing. Use it to take
+  screenshots and verify visual changes after modifying styles,
+  templates, or content. Start the dev server first with `make run`.
+- Clean up screenshot files (*.png) after reviewing them. Delete them
+  once you have confirmed the result to avoid clutter in the project
+  directory.
+- The dev environment runs inside a Docker container with port 8000
+  mapped to the host.
 
 ## Content the page should surface
 
