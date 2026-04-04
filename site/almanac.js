@@ -14,6 +14,97 @@
   var ANIM_NAV_DELAY = 80;
 
 
+  // --- seeded randomness ---
+  // same picks all day, different tomorrow
+
+  function dayHash(date) {
+    var doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+    return date.getFullYear() * 1000 + doy;
+  }
+
+  function seededRandom(seed) {
+    var s = seed | 0;
+    return function () {
+      s = (s + 0x6D2B79F5) | 0;
+      var t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function pickItems(list, count, rng) {
+    if (list.length <= count) return list.slice();
+    var copy = list.slice();
+    var result = [];
+    for (var i = 0; i < count; i++) {
+      var idx = Math.floor(rng() * copy.length);
+      result.push(copy[idx]);
+      copy.splice(idx, 1);
+    }
+    return result;
+  }
+
+  function parseListItems(body) {
+    var lines = body.split('\n');
+    var bullets = [];
+    var prose = [];
+    var inProse = false;
+    var currentProse = '';
+
+    for (var i = 0; i < lines.length; i++) {
+      var trimmed = lines[i].trim();
+      if (trimmed.match(/^- /)) {
+        if (inProse && currentProse) {
+          prose.push(currentProse.trim());
+          currentProse = '';
+          inProse = false;
+        }
+        bullets.push(trimmed.slice(2));
+      } else if (trimmed === '') {
+        if (inProse && currentProse) {
+          prose.push(currentProse.trim());
+          currentProse = '';
+          inProse = false;
+        }
+      } else {
+        inProse = true;
+        currentProse += (currentProse ? ' ' : '') + trimmed;
+      }
+    }
+    if (inProse && currentProse) {
+      prose.push(currentProse.trim());
+    }
+
+    return { bullets: bullets, prose: prose };
+  }
+
+  function highlightText(text) {
+    // split into sentence fragments on ". " boundaries
+    var fragments = text.split(/(?<=\.)\s+/);
+    return fragments.map(function (frag) {
+      var trimmed = frag.trim();
+      if (!trimmed) return '';
+      var words = trimmed.split(/\s+/);
+
+      // short fragments (4 words or fewer): bold the whole thing
+      if (words.length <= 4) {
+        return '<strong>' + trimmed + '</strong>';
+      }
+
+      // if there's an early comma, bold up to it
+      var comma = trimmed.indexOf(',');
+      if (comma > 0 && comma < 30) {
+        return '<strong>' + trimmed.slice(0, comma) + '</strong>' + trimmed.slice(comma);
+      }
+
+      // otherwise bold the first 2-3 words (3 if first word is an article/conjunction)
+      var count = /^(the|a|an|if|when|it|and|or|but|do|in)$/i.test(words[0]) ? 3 : 2;
+      count = Math.min(count, words.length);
+      return '<strong>' + words.slice(0, count).join(' ') + '</strong> ' + words.slice(count).join(' ');
+    }).join(' ');
+  }
+
+
   // --- time and season ---
 
   var SEASONS = [
@@ -73,39 +164,39 @@
 
   var HAIKU = {
     'winter': [
-      { lines: ['the winter stillness\na woodpecker searching through\nthe hollow silence'], author: 'dark furrow' },
-      { lines: ['bare frozen furrows\nhold the memory of seed\nbeneath the long dark'], author: 'dark furrow' },
-      { lines: ['woodsmoke ascending\nthrough the grey unmoving sky\nthe kettle whistles'], author: 'dark furrow' }
+      { lines: ['the winter stillness\na woodpecker searching through\nthe hollow silence'] },
+      { lines: ['bare frozen furrows\nhold the memory of seed\nbeneath the long dark'] },
+      { lines: ['woodsmoke ascending\nthrough the grey unmoving sky\nthe kettle whistles'] }
     ],
     'early-spring': [
-      { lines: ['the old dark furrow\nfills with rain and waits for warmth\nsomething stirs below'], author: 'dark furrow' },
-      { lines: ['cold mud on my hands\nthe first row planted before\nthe sparrows arrive'], author: 'dark furrow' },
-      { lines: ['fog lifts from the creek\nrevealing green where there was\nnothing just last week'], author: 'dark furrow' }
+      { lines: ['the old dark furrow\nfills with rain and waits for warmth\nsomething stirs below'] },
+      { lines: ['cold mud on my hands\nthe first row planted before\nthe sparrows arrive'] },
+      { lines: ['fog lifts from the creek\nrevealing green where there was\nnothing just last week'] }
     ],
     'late-spring': [
-      { lines: ['petals on the path\nthe bees have already found\nwhat i just planted'], author: 'dark furrow' },
-      { lines: ['warm rain after dawn\nthe lettuce grows so quickly\ni cannot keep up'], author: 'dark furrow' },
-      { lines: ['the frogs resume their\nevening argument like\nold familiar friends'], author: 'dark furrow' }
+      { lines: ['petals on the path\nthe bees have already found\nwhat i just planted'] },
+      { lines: ['warm rain after dawn\nthe lettuce grows so quickly\ni cannot keep up'] },
+      { lines: ['the frogs resume their\nevening argument like\nold familiar friends'] }
     ],
     'early-summer': [
-      { lines: ['cicadas tuning\ntheir one long note in the oaks\nthe heat has arrived'], author: 'dark furrow' },
-      { lines: ['the tomato vine\nclimbs past the stake i gave it\nreaching for the sun'], author: 'dark furrow' },
-      { lines: ['lightning bugs at dusk\neach one a small question asked\nthen answered in dark'], author: 'dark furrow' }
+      { lines: ['cicadas tuning\ntheir one long note in the oaks\nthe heat has arrived'] },
+      { lines: ['the tomato vine\nclimbs past the stake i gave it\nreaching for the sun'] },
+      { lines: ['lightning bugs at dusk\neach one a small question asked\nthen answered in dark'] }
     ],
     'midsummer': [
-      { lines: ['the garden gives more\nthan i can carry inside\nthe table overflows'], author: 'dark furrow' },
-      { lines: ['shade beneath the oak\nthe only cool place to sit\nthe dog already knows'], author: 'dark furrow' },
-      { lines: ['thunder in the west\nthe corn stands perfectly still\nwaiting for the rain'], author: 'dark furrow' }
+      { lines: ['the garden gives more\nthan i can carry inside\nthe table overflows'] },
+      { lines: ['shade beneath the oak\nthe only cool place to sit\nthe dog already knows'] },
+      { lines: ['thunder in the west\nthe corn stands perfectly still\nwaiting for the rain'] }
     ],
     'early-fall': [
-      { lines: ['the first cool morning\ni can see my breath again\nthe garden exhales'], author: 'dark furrow' },
-      { lines: ['one red leaf falling\nthrough the still september air\nlanding in my palm'], author: 'dark furrow' },
-      { lines: ['the garlic goes in\nan act of faith in the dark\nsee you in the spring'], author: 'dark furrow' }
+      { lines: ['the first cool morning\ni can see my breath again\nthe garden exhales'] },
+      { lines: ['one red leaf falling\nthrough the still september air\nlanding in my palm'] },
+      { lines: ['the garlic goes in\nan act of faith in the dark\nsee you in the spring'] }
     ],
     'late-fall': [
-      { lines: ['bare branch on bare branch\nthe crow arrives without sound\nthe sky turns away'], author: 'dark furrow' },
-      { lines: ['the last harvest done\ni clean the blade and hang it\non its proper nail'], author: 'dark furrow' },
-      { lines: ['wind through empty stalks\nplaying the garden like some\nforgotten instrument'], author: 'dark furrow' }
+      { lines: ['bare branch on bare branch\nthe crow arrives without sound\nthe sky turns away'] },
+      { lines: ['the last harvest done\ni clean the blade and hang it\non its proper nail'] },
+      { lines: ['wind through empty stalks\nplaying the garden like some\nforgotten instrument'] }
     ]
   };
 
@@ -263,7 +354,7 @@
     document.body.setAttribute('data-time', time);
     document.body.setAttribute('data-season', season.name);
 
-    // sky layer: season color wash, stronger for the hero
+    // sky layer: season color wash
     var sky = document.getElementById('sky-layer');
     if (sky) {
       sky.style.background =
@@ -272,14 +363,13 @@
         'radial-gradient(ellipse at 50% 50%, rgba(' + s.tint + ',0.08) 0%, transparent 70%)';
     }
 
-    // time layer: light source shining down, covering the hero viewport
+    // time layer: light source
     var timeEl = document.getElementById('time-layer');
     if (timeEl) {
       timeEl.style.background = TIME_LIGHTS[time] || TIME_LIGHTS.morning;
     }
   }
 
-  // the light source — stronger now, covering the hero
   var TIME_LIGHTS = {
     night:
       'linear-gradient(to bottom, rgba(100,120,180,0.15) 0%, rgba(100,120,180,0.05) 30%, transparent 70%)',
@@ -334,10 +424,13 @@
     return h + 'h ' + m + 'm';
   }
 
-  function moonGlyph(phase) {
-    var name = moonName(phase);
-    var illum = Math.round(moonIllumination(phase) * 100);
-    return name + ', ' + illum + '%';
+  function formatClock(hours) {
+    var h = Math.floor(hours);
+    var m = Math.round((hours - h) * 60);
+    if (m === 60) { h += 1; m = 0; }
+    var suffix = h >= 12 ? 'pm' : 'am';
+    var display = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    return display + ':' + (m < 10 ? '0' : '') + m + ' ' + suffix;
   }
 
   var MONTHS = ['january','february','march','april','may','june',
@@ -389,27 +482,28 @@
     var sunrise = 12 - hours / 2;
     var sunset = 12 + hours / 2;
 
+    var boldName = '<strong>' + name + '</strong>';
     var lines = [];
 
     if (time === 'night') {
-      lines.push('the moon is ' + name + ', ' + illum + '% lit.');
+      lines.push('the moon is ' + boldName + ', ' + illum + '% lit.');
       lines.push('the world is turned away from the sun.');
-      lines.push(formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
+      lines.push('<strong>' + formatHM(hours) + '</strong> of daylight today. ' + sign + gained + ' minutes from yesterday.');
     } else if (time === 'dawn') {
-      lines.push('the sun rises around ' + formatHM(sunrise) + '.');
-      lines.push('the moon is ' + name + ', ' + illum + '% lit.');
-      lines.push(formatHM(hours) + ' of daylight ahead. it sets around ' + formatHM(sunset) + '.');
+      lines.push('the sun rises around <strong>' + formatClock(sunrise) + '</strong>.');
+      lines.push('the moon is ' + boldName + ', ' + illum + '% lit.');
+      lines.push('<strong>' + formatHM(hours) + '</strong> of daylight ahead. it sets around ' + formatClock(sunset) + '.');
     } else if (time === 'evening') {
-      lines.push('the sun set around ' + formatHM(sunset) + '.');
-      lines.push('the moon is ' + name + ', ' + illum + '% lit.');
-      lines.push('there were ' + formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
+      lines.push('the sun set around <strong>' + formatClock(sunset) + '</strong>.');
+      lines.push('the moon is ' + boldName + ', ' + illum + '% lit.');
+      lines.push('there were <strong>' + formatHM(hours) + '</strong> of daylight today. ' + sign + gained + ' minutes from yesterday.');
     } else {
-      lines.push('the moon is ' + name + ', ' + illum + '% lit.');
-      lines.push('the sun rose around ' + formatHM(sunrise) + ' and sets around ' + formatHM(sunset) + '.');
-      lines.push(formatHM(hours) + ' of daylight today. ' + sign + gained + ' minutes from yesterday.');
+      lines.push('the moon is ' + boldName + ', ' + illum + '% lit.');
+      lines.push('the sun rose around <strong>' + formatClock(sunrise) + '</strong> and sets around <strong>' + formatClock(sunset) + '</strong>.');
+      lines.push('<strong>' + formatHM(hours) + '</strong> of daylight today. ' + sign + gained + ' minutes from yesterday.');
     }
 
-    return lines.join('\n');
+    return lines.join('<br>');
   }
 
 
@@ -417,20 +511,20 @@
 
   function moonGardenTip(phase) {
     if (phase < 3.7)
-      return 'the moon is dark. this is a time for rest and planning. prepare beds, amend soil, but do not plant. the old farmers said nothing wants to start in the dark.';
+      return 'the moon is dark. this is a time for <strong>rest and planning</strong>. prepare beds, amend soil, but do not plant. the old farmers said nothing wants to start in the dark.';
     if (phase < 7.4)
-      return 'the moon is waxing. plant leafy things: lettuce, spinach, cabbage, herbs that grow above ground. the light is growing and pulls the energy upward.';
+      return 'the moon is waxing. <strong>plant leafy things</strong>: lettuce, spinach, cabbage, herbs that grow above ground. the light is growing and pulls the energy upward.';
     if (phase < 11.1)
-      return 'the moon is in its first quarter. plant things that fruit: tomatoes, peppers, beans, squash. the increasing light favors strong stems and heavy fruit.';
+      return 'the moon is in its first quarter. <strong>plant things that fruit</strong>: tomatoes, peppers, beans, squash. the increasing light favors strong stems and heavy fruit.';
     if (phase < 14.8)
-      return 'the moon is nearly full. transplant, fertilize, graft. the light is strongest and the sap is rising. a good time to move plants and feed the soil.';
+      return 'the moon is nearly full. <strong>transplant, fertilize, graft</strong>. the light is strongest and the sap is rising. a good time to move plants and feed the soil.';
     if (phase < 18.5)
-      return 'the moon is full. plant root crops: carrots, potatoes, beets, onions, garlic. the energy is pulling downward now. bulbs and perennials go in well under a full moon.';
+      return 'the moon is full. <strong>plant root crops</strong>: carrots, potatoes, beets, onions, garlic. the energy is pulling downward now. bulbs and perennials go in well under a full moon.';
     if (phase < 22.1)
-      return 'the moon is waning. harvest what is ready, cut herbs for drying, prune what needs shaping. the energy is drawing inward. what you cut now heals faster.';
+      return 'the moon is waning. <strong>harvest what is ready</strong>, cut herbs for drying, prune what needs shaping. the energy is drawing inward. what you cut now heals faster.';
     if (phase < 25.8)
-      return 'the moon is in its last quarter. pull weeds, turn compost, cultivate the soil. this is a killing time, good for destroying what you do not want. the weeds will not come back as fast.';
-    return 'the moon is a thin crescent, almost gone. do not plant. rest, clean tools, plan the next cycle. the old almanacs left these days blank on purpose.';
+      return 'the moon is in its last quarter. <strong>pull weeds, turn compost</strong>, cultivate the soil. this is a killing time, good for destroying what you do not want. the weeds will not come back as fast.';
+    return 'the moon is a thin crescent, almost gone. <strong>do not plant</strong>. rest, clean tools, plan the next cycle. the old almanacs left these days blank on purpose.';
   }
 
 
@@ -479,11 +573,11 @@
 
   function revealWords(root) {
     if (!root) return;
-    var elements = root.querySelectorAll('h2, p, li, blockquote, cite, .moon-glyph');
+    var elements = root.querySelectorAll('h2, p, li, blockquote');
     var allItems = [];
 
     elements.forEach(function (el) {
-      if (el.tagName === 'LI' || el.tagName === 'BLOCKQUOTE' || el.tagName === 'CITE' || el.classList.contains('moon-glyph')) {
+      if (el.tagName === 'LI' || el.tagName === 'BLOCKQUOTE') {
         allItems.push(el);
         return;
       }
@@ -502,8 +596,26 @@
               allItems.push(span);
             }
           });
-        } else {
-          nodes.push(node.cloneNode(true));
+        } else if (node.nodeType === 1) {
+          // for child elements like <strong>, split their text into word spans too
+          var wrapper = document.createElement(node.tagName.toLowerCase());
+          // copy attributes
+          for (var a = 0; a < node.attributes.length; a++) {
+            wrapper.setAttribute(node.attributes[a].name, node.attributes[a].value);
+          }
+          var innerText = node.textContent || '';
+          innerText.split(/(\s+)/).forEach(function (w) {
+            if (/^\s*$/.test(w)) {
+              wrapper.appendChild(document.createTextNode(w));
+            } else {
+              var span = document.createElement('span');
+              span.className = 'word';
+              span.textContent = w;
+              wrapper.appendChild(span);
+              allItems.push(span);
+            }
+          });
+          nodes.push(wrapper);
         }
       });
       el.textContent = '';
@@ -532,18 +644,14 @@
     dom.dateLine = document.querySelector('.date-line');
     dom.seasonName = document.querySelector('.season-name');
     dom.seasonNote = document.querySelector('.season-note');
-    dom.haikuBlock = document.querySelector('.hero-haiku blockquote');
-    dom.haikuCite = document.querySelector('.hero-haiku cite');
-    dom.moonGlyph = document.querySelector('.moon-glyph');
+    dom.haikuBlock = document.querySelector('.flow-haiku blockquote');
     dom.moonGardenTip = document.querySelector('.moon-garden-tip');
     dom.weatherMoodText = document.querySelector('.weather-mood-text');
     dom.skyData = document.querySelector('.sky-data');
-    dom.glossaryNote = document.querySelector('.glossary-note');
     dom.footerP = document.querySelector('footer p');
     dom.wisdom = document.querySelector('.wisdom');
-    dom.almanac = document.querySelector('.glossary-entries');
-    dom.hero = document.querySelector('.hero');
-    dom.glossary = document.querySelector('.glossary');
+    dom.flowEntries = document.querySelector('.flow-entries');
+    dom.readout = document.querySelector('.readout');
     dom.footer = document.querySelector('footer');
     dom.seasonsNav = document.querySelector('.seasons-nav');
     dom.timesNav = document.querySelector('.times-nav');
@@ -579,35 +687,31 @@
       dom.haikuBlock.innerHTML = haikuLines.map(function (l) {
         return '<span class="haiku-line">' + l + '</span>';
       }).join('');
-      dom.haikuCite.textContent = '— ' + haiku.author;
     }
 
-    // moon glyph — large, standalone
+    // moon gardening tip (now with bold highlights)
     var phase = moonPhase(now);
-    dom.moonGlyph.textContent = moonGlyph(phase);
-
-    // moon gardening tip
-    dom.moonGardenTip.textContent = moonGardenTip(phase);
+    dom.moonGardenTip.innerHTML = moonGardenTip(phase);
 
     // weather mood
     dom.weatherMoodText.textContent = getWeatherMood(season, contentTime);
 
-    // sky data
-    dom.skyData.innerHTML = skyText(now, contentTime).replace(/\n/g, '<br>');
-
-    // glossary note
-    dom.glossaryNote.textContent = 'what the ' + contentTime + ' brings';
+    // sky data (now with bold highlights)
+    dom.skyData.innerHTML = skyText(now, contentTime);
 
     // footer countdown
     dom.footerP.textContent =
       next.days + ' days until ' + next.label + ' \u00b7 zone 7a \u00b7 north carolina';
 
-    // crossfade: fade out content areas, then rebuild
-    var fadeTargets = ['.hero-grid', '.hero-lower', '.wisdom', '.glossary-entries', 'footer'];
+    // fade out content areas, then rebuild
+    var fadeTargets = ['.flow-season', '.flow-sky', '.flow-haiku', '.wisdom', '.flow-entries', 'footer'];
     fadeTargets.forEach(function (sel) {
       var el = document.querySelector(sel);
       if (el) el.style.opacity = '0';
     });
+
+    // seed the random number generator for today
+    var rng = seededRandom(dayHash(now));
 
     // fetch or use cached manifest
     var p = cachedManifest
@@ -641,36 +745,55 @@
       })
       .then(function (entries) {
         dom.wisdom.innerHTML = '';
-        dom.almanac.innerHTML = '';
+        dom.flowEntries.innerHTML = '';
 
+        // collect all fragments into one flowing narrative
+        var fragments = [];
+
+        // wisdom lines
         entries.forEach(function (entry) {
-          var div = document.createElement('div');
-          div.className = 'entry';
+          if (!entry.meta.time) return;
+          var lines = entry.body.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+          if (lines.length === 0) return;
+          var picks = pickItems(lines, Math.min(2, lines.length), rng);
+          picks.forEach(function (line) { fragments.push(line); });
+        });
 
-          var h2 = document.createElement('h2');
-          h2.textContent = entry.meta.section || '';
-          div.appendChild(h2);
+        // seasonal entries: pick 1 item from each category
+        entries.forEach(function (entry) {
+          if (entry.meta.time) return;
+          var parsed = parseListItems(entry.body);
 
-          var content = document.createElement('div');
-          content.innerHTML = renderMarkdown(entry.body);
-          div.appendChild(content);
-
-          var hasLists = content.querySelector('ul');
-          var hasParagraphs = content.querySelector('p');
-          if (hasLists && hasParagraphs) {
-            div.setAttribute('data-content-type', 'mixed');
-          } else if (hasParagraphs && !hasLists) {
-            div.setAttribute('data-content-type', 'prose');
-          } else {
-            div.setAttribute('data-content-type', 'list');
+          if (parsed.bullets.length > 0) {
+            var picks = pickItems(parsed.bullets, 1, rng);
+            picks.forEach(function (item) { fragments.push(item); });
           }
 
-          if (entry.meta.time) {
-            dom.wisdom.appendChild(div);
-          } else {
-            dom.almanac.appendChild(div);
+          if (parsed.prose.length > 0) {
+            var prosePick = pickItems(parsed.prose, 1, rng);
+            fragments.push(prosePick[0]);
           }
         });
+
+        // shuffle all fragments together for a natural mixed read
+        for (var i = fragments.length - 1; i > 0; i--) {
+          var j = Math.floor(rng() * (i + 1));
+          var tmp = fragments[i];
+          fragments[i] = fragments[j];
+          fragments[j] = tmp;
+        }
+
+        // compose into flowing paragraphs, ~3-4 fragments each
+        var SEP = ' <span class="sep">\u2767</span> ';
+        var chunkSize = Math.min(4, Math.ceil(fragments.length / 2));
+        for (var c = 0; c < fragments.length; c += chunkSize) {
+          var chunk = fragments.slice(c, c + chunkSize);
+          var html = chunk.map(function (f) { return highlightText(f); }).join(SEP);
+          var p = document.createElement('p');
+          p.className = 'narrative';
+          p.innerHTML = html;
+          dom.flowEntries.appendChild(p);
+        }
 
         // fade in and reveal
         fadeTargets.forEach(function (sel) {
@@ -678,8 +801,7 @@
           if (el) el.style.opacity = '1';
         });
 
-        revealWords(dom.hero);
-        revealWords(dom.glossary);
+        revealWords(dom.readout);
         revealWords(dom.footer);
 
         // update navs
@@ -687,7 +809,7 @@
         updateTimeNav(contentTime);
       })
       .catch(function () {
-        dom.almanac.innerHTML = '<p style="color:var(--ash);font-style:italic;text-align:center;">the pages could not be found. try again in a moment.</p>';
+        dom.flowEntries.innerHTML = '<p style="color:var(--ash);font-style:italic;">the pages could not be found. try again in a moment.</p>';
         fadeTargets.forEach(function (sel) {
           var el = document.querySelector(sel);
           if (el) el.style.opacity = '1';
