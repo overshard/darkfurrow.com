@@ -577,7 +577,7 @@
     var allItems = [];
 
     elements.forEach(function (el) {
-      if (el.tagName === 'LI' || el.tagName === 'BLOCKQUOTE') {
+      if (el.tagName === 'LI') {
         allItems.push(el);
         return;
       }
@@ -645,7 +645,7 @@
     dom.seasonName = document.querySelector('.season-name');
     dom.seasonNote = document.querySelector('.season-note');
     dom.haikuBlock = document.querySelector('.flow-haiku blockquote');
-    dom.moonGardenTip = document.querySelector('.moon-garden-tip');
+    dom.moonGardenTip = null;
     dom.weatherMoodText = document.querySelector('.weather-mood-text');
     dom.skyData = document.querySelector('.sky-data');
     dom.footerP = document.querySelector('footer p');
@@ -655,6 +655,15 @@
     dom.footer = document.querySelector('footer');
     dom.seasonsNav = document.querySelector('.seasons-nav');
     dom.timesNav = document.querySelector('.times-nav');
+    dom.navDrawer = document.querySelector('.nav-drawer');
+    dom.navToggle = document.querySelector('.nav-toggle');
+
+    if (dom.navToggle) {
+      dom.navToggle.addEventListener('click', function () {
+        var open = dom.navDrawer.classList.toggle('open');
+        dom.navToggle.textContent = open ? '...close' : '...explore';
+      });
+    }
   }
 
   function loadContent(seasonOverride, timeOverride) {
@@ -689,9 +698,8 @@
       }).join('');
     }
 
-    // moon gardening tip (now with bold highlights)
+    // moon gardening tip (rendered in narrative section below)
     var phase = moonPhase(now);
-    dom.moonGardenTip.innerHTML = moonGardenTip(phase);
 
     // weather mood
     dom.weatherMoodText.textContent = getWeatherMood(season, contentTime);
@@ -749,6 +757,9 @@
 
         // collect all fragments into one flowing narrative
         var fragments = [];
+
+        // moon garden tip mixed in with the rest
+        fragments.push(moonGardenTip(phase));
 
         // wisdom lines
         entries.forEach(function (entry) {
