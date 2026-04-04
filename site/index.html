@@ -37,58 +37,36 @@
   <div id="time-layer"></div>
 
   <main>
-    <article class="hero">
+    <article class="readout">
       <p class="date-line"></p>
 
-      <header class="hero-header">
+      <header class="readout-header">
         <h1>dark furrow</h1>
         <p class="subtitle">old knowledge preserved</p>
       </header>
 
-      <div class="hero-grid">
-        <div class="hero-cell hero-date">
-          <p class="season-name"></p>
-          <p class="season-note"></p>
-        </div>
+      <section class="flow flow-season">
+        <p class="season-name"></p>
+        <p class="season-note"></p>
+      </section>
 
-        <div class="hero-cell hero-moon">
-          <span class="moon-glyph"></span>
-          <p class="moon-garden-tip"></p>
-        </div>
+      <section class="flow flow-sky">
+        <p class="weather-mood-text"></p>
+        <p class="sky-data"></p>
+        <p class="moon-garden-tip"></p>
+      </section>
 
-        <div class="hero-cell hero-haiku">
-          <blockquote></blockquote>
-          <cite></cite>
-        </div>
-      </div>
-
-      <div class="hero-lower">
-        <div class="hero-cell hero-sky">
-          <h2>what the sky is doing</h2>
-          <p class="sky-data"></p>
-        </div>
-
-        <div class="hero-cell hero-mood">
-          <h2>the air today</h2>
-          <p class="weather-mood-text"></p>
-        </div>
-      </div>
+      <section class="flow flow-haiku">
+        <blockquote></blockquote>
+      </section>
 
       <section class="wisdom"></section>
 
-      <nav class="seasons-nav"></nav>
-      <div class="scroll-cue" aria-hidden="true"></div>
+      <section class="flow flow-entries"></section>
+
+      <nav class="nav-strip seasons-nav"></nav>
+      <nav class="nav-strip times-nav"></nav>
     </article>
-
-    <section class="glossary">
-      <header class="glossary-header">
-        <p class="glossary-note"></p>
-      </header>
-
-      <nav class="times-nav"></nav>
-
-      <div class="glossary-entries almanac"></div>
-    </section>
 
     <footer>
       <p>zone 7a &middot; north carolina &middot; tended by hand</p>
