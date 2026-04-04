@@ -35,36 +35,58 @@
   <div id="time-layer"></div>
 
   <main>
-    <header>
-      <div class="title-row">
+    <article class="hero">
+      <p class="date-line"></p>
+
+      <header class="hero-header">
         <h1>dark furrow</h1>
         <p class="subtitle">old knowledge preserved</p>
+      </header>
+
+      <div class="hero-grid">
+        <div class="hero-cell hero-date">
+          <p class="season-name"></p>
+          <p class="season-note"></p>
+        </div>
+
+        <div class="hero-cell hero-moon">
+          <span class="moon-glyph"></span>
+          <p class="moon-garden-tip"></p>
+        </div>
+
+        <div class="hero-cell hero-haiku">
+          <blockquote></blockquote>
+          <cite></cite>
+        </div>
       </div>
-      <p class="date-line"></p>
+
+      <div class="hero-lower">
+        <div class="hero-cell hero-sky">
+          <h2>what the sky is doing</h2>
+          <p class="sky-data"></p>
+        </div>
+
+        <div class="hero-cell hero-mood">
+          <h2>the air today</h2>
+          <p class="weather-mood-text"></p>
+        </div>
+      </div>
+
+      <section class="wisdom"></section>
+
       <nav class="seasons-nav"></nav>
-    </header>
+      <div class="scroll-cue" aria-hidden="true"></div>
+    </article>
 
-    <section class="haiku">
-      <blockquote></blockquote>
-      <cite></cite>
+    <section class="glossary">
+      <header class="glossary-header">
+        <p class="glossary-note"></p>
+      </header>
+
+      <nav class="times-nav"></nav>
+
+      <div class="glossary-entries almanac"></div>
     </section>
-
-    <section class="season">
-      <p class="season-name"></p>
-      <p class="season-note"></p>
-    </section>
-
-    <section class="weather-mood">
-      <h2>the air today</h2>
-      <p></p>
-    </section>
-
-    <section class="sky">
-      <h2>what the sky is doing</h2>
-      <p></p>
-    </section>
-
-    <section class="almanac"></section>
 
     <footer>
       <p>zone 7a &middot; north carolina &middot; tended by hand</p>

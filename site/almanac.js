@@ -52,6 +52,17 @@
     return 'night';
   }
 
+  // which content categories belong to each time of day
+  var TIME_CONTENT = {
+    night:     ['sky/', 'names/', 'remedies/'],
+    dawn:      ['planting/', 'foraging/'],
+    morning:   ['planting/', 'chores/', 'bugs/'],
+    afternoon: ['kitchen/', 'bugs/', 'chores/'],
+    evening:   ['kitchen/', 'remedies/', 'foraging/', 'names/']
+  };
+
+  var TIME_LABELS = ['night', 'dawn', 'morning', 'afternoon', 'evening'];
+
 
   // --- haiku ---
   // real poems. the old masters wrote about exactly this.
@@ -97,7 +108,6 @@
   function getHaiku(season) {
     var poems = HAIKU[season.name];
     if (!poems) return null;
-    // pick one based on day of year so it changes daily but is stable within the day
     var doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
     return poems[doy % poems.length];
   }
@@ -223,13 +233,13 @@
 
   // season palettes — the color of the earth shifts with the year
   var SEASON_COLORS = {
-    'winter':       { bg: '#07080b', tint: '40,50,80' },     // cold blue
-    'early-spring': { bg: '#0a0c08', tint: '50,70,35' },     // dark moss
-    'late-spring':  { bg: '#0b0d07', tint: '55,80,30' },     // green rising
-    'early-summer': { bg: '#0d0b07', tint: '80,65,20' },     // golden heat
-    'midsummer':    { bg: '#0e0a06', tint: '90,60,15' },     // scorched amber
-    'early-fall':   { bg: '#0d0906', tint: '85,45,20' },     // rust and oak
-    'late-fall':    { bg: '#0b0908', tint: '65,40,30' }      // bare wood
+    'winter':       { bg: '#07080b', tint: '40,50,80' },
+    'early-spring': { bg: '#0a0c08', tint: '50,70,35' },
+    'late-spring':  { bg: '#0b0d07', tint: '55,80,30' },
+    'early-summer': { bg: '#0d0b07', tint: '80,65,20' },
+    'midsummer':    { bg: '#0e0a06', tint: '90,60,15' },
+    'early-fall':   { bg: '#0d0906', tint: '85,45,20' },
+    'late-fall':    { bg: '#0b0908', tint: '65,40,30' }
   };
 
   function applyDaylightCycle(time, season) {
@@ -237,7 +247,6 @@
     var s = SEASON_COLORS[season.name] || SEASON_COLORS['early-spring'];
     var r = document.documentElement;
 
-    // background color blends time + season
     r.style.setProperty('--earth', s.bg);
     r.style.setProperty('--bone', c.text);
     r.style.setProperty('--sprout', c.accent);
@@ -250,34 +259,34 @@
     document.body.setAttribute('data-time', time);
     document.body.setAttribute('data-season', season.name);
 
-    // sky layer: season color wash
+    // sky layer: season color wash, stronger for the hero
     var sky = document.getElementById('sky-layer');
     if (sky) {
       sky.style.background =
-        'radial-gradient(ellipse at 30% 20%, rgba(' + s.tint + ',0.12) 0%, transparent 50%), ' +
-        'radial-gradient(ellipse at 70% 80%, rgba(' + s.tint + ',0.08) 0%, transparent 50%), ' +
-        'radial-gradient(ellipse at 50% 50%, rgba(' + s.tint + ',0.05) 0%, transparent 70%)';
+        'radial-gradient(ellipse at 30% 15%, rgba(' + s.tint + ',0.25) 0%, transparent 55%), ' +
+        'radial-gradient(ellipse at 70% 80%, rgba(' + s.tint + ',0.12) 0%, transparent 55%), ' +
+        'radial-gradient(ellipse at 50% 50%, rgba(' + s.tint + ',0.08) 0%, transparent 70%)';
     }
 
-    // time layer: light source shining down from above
+    // time layer: light source shining down, covering the hero viewport
     var timeEl = document.getElementById('time-layer');
     if (timeEl) {
       timeEl.style.background = TIME_LIGHTS[time] || TIME_LIGHTS.morning;
     }
   }
 
-  // the light source — a thin band across the top, sun or moon
+  // the light source — stronger now, covering the hero
   var TIME_LIGHTS = {
     night:
-      'linear-gradient(to bottom, rgba(100,120,180,0.10) 0%, rgba(100,120,180,0.03) 40%, transparent 100%)',
+      'linear-gradient(to bottom, rgba(100,120,180,0.15) 0%, rgba(100,120,180,0.05) 30%, transparent 70%)',
     dawn:
-      'linear-gradient(to bottom, rgba(220,150,70,0.14) 0%, rgba(200,120,50,0.04) 50%, transparent 100%)',
+      'linear-gradient(to bottom, rgba(220,150,70,0.22) 0%, rgba(200,120,50,0.06) 40%, transparent 80%)',
     morning:
-      'linear-gradient(to bottom, rgba(240,210,140,0.10) 0%, rgba(240,210,140,0.02) 50%, transparent 100%)',
+      'linear-gradient(to bottom, rgba(240,210,140,0.16) 0%, rgba(240,210,140,0.04) 40%, transparent 80%)',
     afternoon:
-      'linear-gradient(to bottom, rgba(240,200,110,0.12) 0%, rgba(240,200,110,0.03) 50%, transparent 100%)',
+      'linear-gradient(to bottom, rgba(240,200,110,0.18) 0%, rgba(240,200,110,0.05) 40%, transparent 80%)',
     evening:
-      'linear-gradient(to bottom, rgba(200,90,30,0.16) 0%, rgba(180,70,20,0.04) 50%, transparent 100%)'
+      'linear-gradient(to bottom, rgba(200,90,30,0.24) 0%, rgba(180,70,20,0.06) 40%, transparent 80%)'
   };
 
 
@@ -321,10 +330,9 @@
   }
 
   function moonGlyph(phase) {
-    // 8 unicode moon glyphs mapped to the synodic cycle
-    var glyphs = ['\uD83C\uDF11','\uD83C\uDF12','\uD83C\uDF13','\uD83C\uDF14','\uD83C\uDF15','\uD83C\uDF16','\uD83C\uDF17','\uD83C\uDF18'];
-    var i = Math.floor((phase / 29.53058867) * 8) % 8;
-    return glyphs[i];
+    var name = moonName(phase);
+    var illum = Math.round(moonIllumination(phase) * 100);
+    return name + ', ' + illum + '%';
   }
 
   var MONTHS = ['january','february','march','april','may','june',
@@ -359,7 +367,6 @@
         return { days: diff, label: s.label };
       }
     }
-    // wrap to next year
     var first = SEASONS[0];
     var next = new Date(date.getFullYear() + 1, first.start[0] - 1, first.start[1]);
     return { days: Math.ceil((next - date) / 86400000), label: first.label };
@@ -368,7 +375,6 @@
   function skyText(now, time) {
     var phase = moonPhase(now);
     var name = moonName(phase);
-    var glyph = moonGlyph(phase);
     var illum = Math.round(moonIllumination(phase) * 100);
     var hours = daylight(now, LAT);
     var yesterday = new Date(now);
@@ -400,8 +406,28 @@
   }
 
 
+  // --- moon gardening ---
+
+  function moonGardenTip(phase) {
+    if (phase < 3.7)
+      return 'the moon is dark. this is a time for rest and planning. prepare beds, amend soil, but do not plant. the old farmers said nothing wants to start in the dark.';
+    if (phase < 7.4)
+      return 'the moon is waxing. plant leafy things: lettuce, spinach, cabbage, herbs that grow above ground. the light is growing and pulls the energy upward.';
+    if (phase < 11.1)
+      return 'the moon is in its first quarter. plant things that fruit: tomatoes, peppers, beans, squash. the increasing light favors strong stems and heavy fruit.';
+    if (phase < 14.8)
+      return 'the moon is nearly full. transplant, fertilize, graft. the light is strongest and the sap is rising. a good time to move plants and feed the soil.';
+    if (phase < 18.5)
+      return 'the moon is full. plant root crops: carrots, potatoes, beets, onions, garlic. the energy is pulling downward now. bulbs and perennials go in well under a full moon.';
+    if (phase < 22.1)
+      return 'the moon is waning. harvest what is ready, cut herbs for drying, prune what needs shaping. the energy is drawing inward. what you cut now heals faster.';
+    if (phase < 25.8)
+      return 'the moon is in its last quarter. pull weeds, turn compost, cultivate the soil. this is a killing time, good for destroying what you do not want. the weeds will not come back as fast.';
+    return 'the moon is a thin crescent, almost gone. do not plant. rest, clean tools, plan the next cycle. the old almanacs left these days blank on purpose.';
+  }
+
+
   // --- markdown parsing ---
-  // just enough to render what we write. no libraries.
 
   function parseFrontmatter(text) {
     var match = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -445,12 +471,12 @@
   // --- word reveal ---
 
   function revealWords(root) {
-    var elements = root.querySelectorAll('h2, p, li');
-    var allItems = []; // mixed: word spans and whole li elements
+    if (!root) return;
+    var elements = root.querySelectorAll('h2, p, li, blockquote, cite, .moon-glyph');
+    var allItems = [];
 
     elements.forEach(function (el) {
-      if (el.tagName === 'LI') {
-        // list items fade in as a whole unit, bullet and all
+      if (el.tagName === 'LI' || el.tagName === 'BLOCKQUOTE' || el.tagName === 'CITE' || el.classList.contains('moon-glyph')) {
         allItems.push(el);
         return;
       }
@@ -488,17 +514,21 @@
   // --- main ---
 
   var currentSeason = null;
+  var currentTimeOverride = null;
   var cachedManifest = null;
   var naturalSeason = null;
+  var naturalTime = null;
 
-  function loadContent(seasonOverride) {
+  function loadContent(seasonOverride, timeOverride) {
     var now = new Date();
     var season = seasonOverride || getSeason(now);
-    var time = getTimeOfDay(now);
+    var realTime = getTimeOfDay(now);
+    var contentTime = timeOverride || realTime;
     currentSeason = season;
+    currentTimeOverride = timeOverride;
 
-    // daylight cycle follows the clock, tinted by season
-    applyDaylightCycle(time, season);
+    // daylight cycle follows the real clock, not the content override
+    applyDaylightCycle(realTime, season);
 
     // date line
     document.querySelector('.date-line').textContent = writtenDate(now);
@@ -509,8 +539,8 @@
 
     // haiku
     var haiku = getHaiku(season);
-    var haikuBlock = document.querySelector('.haiku blockquote');
-    var haikuCite = document.querySelector('.haiku cite');
+    var haikuBlock = document.querySelector('.hero-haiku blockquote');
+    var haikuCite = document.querySelector('.hero-haiku cite');
     if (haiku) {
       var haikuLines = haiku.lines[0].split('\n');
       haikuBlock.innerHTML = haikuLines.map(function (l) {
@@ -519,13 +549,21 @@
       haikuCite.textContent = '';
     }
 
-    // weather mood
-    var moodP = document.querySelector('.weather-mood p');
-    moodP.textContent = getWeatherMood(season, time);
+    // moon glyph — large, standalone
+    var phase = moonPhase(now);
+    document.querySelector('.moon-glyph').textContent = moonGlyph(phase);
 
-    // sky always shows real data
-    var skyP = document.querySelector('.sky p');
-    skyP.innerHTML = skyText(now, time).replace(/\n/g, '<br>');
+    // moon gardening tip
+    document.querySelector('.moon-garden-tip').textContent = moonGardenTip(phase);
+
+    // weather mood
+    document.querySelector('.weather-mood-text').textContent = getWeatherMood(season, contentTime);
+
+    // sky data
+    document.querySelector('.sky-data').innerHTML = skyText(now, contentTime).replace(/\n/g, '<br>');
+
+    // glossary note
+    document.querySelector('.glossary-note').textContent = 'what the ' + contentTime + ' brings';
 
     // footer countdown
     var next = daysUntilNextSeason(now);
@@ -533,7 +571,7 @@
       next.days + ' days until ' + next.label + ' \u00b7 zone 7a \u00b7 north carolina';
 
     // crossfade: fade out content areas, then rebuild
-    var fadeTargets = ['.season', '.haiku', '.weather-mood', '.sky', '.almanac', 'footer'];
+    var fadeTargets = ['.hero-grid', '.hero-lower', '.wisdom', '.glossary-entries', 'footer'];
     fadeTargets.forEach(function (sel) {
       var el = document.querySelector(sel);
       if (el) el.style.opacity = '0';
@@ -547,10 +585,17 @@
     p.then(function (manifest) {
         cachedManifest = manifest;
 
+        var allowedPrefixes = TIME_CONTENT[contentTime] || [];
+
         var relevant = manifest.filter(function (entry) {
+          // wisdom entries: filter by time
+          if (entry.time) return entry.time === contentTime;
+          // season entries: filter by season AND time-based category
           if (entry.season && entry.season !== season.name) return false;
-          if (entry.time && entry.time !== time) return false;
-          return true;
+          for (var i = 0; i < allowedPrefixes.length; i++) {
+            if (entry.path.indexOf(allowedPrefixes[i]) === 0) return true;
+          }
+          return false;
         });
 
         return Promise.all(relevant.map(function (entry) {
@@ -560,7 +605,9 @@
         }));
       })
       .then(function (entries) {
-        var almanac = document.querySelector('.almanac');
+        var wisdom = document.querySelector('.wisdom');
+        var almanac = document.querySelector('.glossary-entries');
+        wisdom.innerHTML = '';
         almanac.innerHTML = '';
 
         entries.forEach(function (entry) {
@@ -575,7 +622,21 @@
           content.innerHTML = renderMarkdown(entry.body);
           div.appendChild(content);
 
-          almanac.appendChild(div);
+          var hasLists = content.querySelector('ul');
+          var hasParagraphs = content.querySelector('p');
+          if (hasLists && hasParagraphs) {
+            div.setAttribute('data-content-type', 'mixed');
+          } else if (hasParagraphs && !hasLists) {
+            div.setAttribute('data-content-type', 'prose');
+          } else {
+            div.setAttribute('data-content-type', 'list');
+          }
+
+          if (entry.meta.time) {
+            wisdom.appendChild(div);
+          } else {
+            almanac.appendChild(div);
+          }
         });
 
         // fade in and reveal
@@ -584,16 +645,13 @@
           if (el) el.style.opacity = '1';
         });
 
-        revealWords(document.querySelector('header'));
-        revealWords(document.querySelector('.season'));
-        revealWords(document.querySelector('.haiku'));
-        revealWords(document.querySelector('.weather-mood'));
-        revealWords(document.querySelector('.sky'));
-        revealWords(document.querySelector('.almanac'));
+        revealWords(document.querySelector('.hero'));
+        revealWords(document.querySelector('.glossary'));
         revealWords(document.querySelector('footer'));
 
-        // update nav
+        // update navs
         updateNav(season);
+        updateTimeNav(contentTime);
       });
   }
 
@@ -622,7 +680,7 @@
       delay += 80;
       a.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        loadContent(s);
+        loadContent(s, currentTimeOverride);
       });
       nav.appendChild(a);
     });
@@ -634,7 +692,39 @@
       ret.style.animationDelay = delay + 'ms';
       ret.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        loadContent(null);
+        loadContent(null, currentTimeOverride);
+      });
+      nav.appendChild(ret);
+    }
+  }
+
+  function updateTimeNav(activeTime) {
+    var nav = document.querySelector('.times-nav');
+    if (!nav) return;
+    nav.innerHTML = '';
+    var delay = 0;
+
+    TIME_LABELS.forEach(function (t) {
+      var a = document.createElement('a');
+      a.textContent = t;
+      if (t === activeTime) {
+        a.className = 'active';
+      }
+      a.style.animationDelay = delay + 'ms';
+      delay += 80;
+      a.addEventListener('click', function () {
+        loadContent(currentSeason === naturalSeason ? null : currentSeason, t);
+      });
+      nav.appendChild(a);
+    });
+
+    if (currentTimeOverride && currentTimeOverride !== naturalTime) {
+      var ret = document.createElement('a');
+      ret.textContent = 'return to now';
+      ret.className = 'return-now';
+      ret.style.animationDelay = delay + 'ms';
+      ret.addEventListener('click', function () {
+        loadContent(currentSeason === naturalSeason ? null : currentSeason, null);
       });
       nav.appendChild(ret);
     }
@@ -643,6 +733,7 @@
   // initial render
   var now = new Date();
   naturalSeason = getSeason(now);
+  naturalTime = getTimeOfDay(now);
   loadContent(null);
 
 })();

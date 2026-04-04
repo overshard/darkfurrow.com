@@ -12,6 +12,11 @@
   --under1: rgba(26,23,20,0.7);
   --under2: rgba(42,36,32,0.5);
   --under3: rgba(26,23,20,0.4);
+
+  --type-hero-title: clamp(3.2rem, 5vw + 1rem, 5rem);
+  --type-hero-season: clamp(2.2rem, 3vw + 0.8rem, 3.2rem);
+  --type-hero-body: clamp(0.95rem, 0.8vw + 0.6rem, 1.05rem);
+  --type-hero-label: 0.85rem;
 }
 
 * {
@@ -34,228 +39,226 @@ body {
 }
 
 main {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 6rem;
+  position: relative;
 }
 
-header {
-  margin-bottom: 4rem;
-  border-bottom: none;
-  padding-bottom: 2rem;
-}
 
-.title-row {
+/* ===== HERO ===== */
+
+.hero {
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 3rem 3rem;
+  position: relative;
+  max-width: 72rem;
+  margin: 0 auto;
 }
 
-h1 {
-  font-size: 2.4rem;
+.hero-header {
+  margin-bottom: 2.5rem;
+}
+
+.hero-header::after {
+  content: '';
+  display: block;
+  width: 4rem;
+  height: 1px;
+  background: var(--bark);
+  margin-top: 2rem;
+  opacity: 0.6;
+}
+
+.hero-header h1 {
+  font-size: var(--type-hero-title);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--parchment);
+  line-height: 1.1;
+  text-shadow: 0 -2px 40px var(--glow);
 }
 
 .subtitle {
   font-style: italic;
   color: var(--ash);
-  font-size: 0.9rem;
+  font-size: 1rem;
+  margin-top: 0.4rem;
   animation: breathe 8s ease-in-out infinite;
 }
 
-.date-line {
-  color: var(--ash);
-  font-size: 0.8rem;
-  font-style: italic;
-  letter-spacing: 0.03em;
-  margin-top: 0.6rem;
-  margin-bottom: 0.2rem;
+
+/* --- hero grid --- */
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 2rem 3rem;
+  align-items: start;
+  margin-top: 2rem;
 }
 
-.season {
-  margin-bottom: 3rem;
-  padding: 1.5rem 0;
-  border-bottom: none;
+.hero-lower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 4rem;
+  align-items: start;
+  margin-top: 2.5rem;
+}
+
+.hero-cell {
   transition: opacity 0.4s ease;
 }
 
-.season-name {
-  font-size: 1.3rem;
-  font-weight: 500;
-  color: var(--sprout);
-  margin-bottom: 0.8rem;
+
+/* --- hero elements --- */
+
+.date-line {
+  color: var(--ash);
+  font-size: 0.88rem;
+  font-style: italic;
   letter-spacing: 0.03em;
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+}
+
+.season-name {
+  font-size: var(--type-hero-season);
+  font-weight: 400;
+  color: var(--sprout);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   animation: sway 6s ease-in-out infinite;
   transform-origin: left center;
   transition: color 2s ease;
 }
 
+.moon-glyph {
+  display: block;
+  font-size: 1.1rem;
+  font-style: italic;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  color: var(--bone);
+}
+
+.moon-garden-tip {
+  color: var(--ash);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.hero-sky h2,
+.hero-mood h2 {
+  font-size: var(--type-hero-label);
+  font-weight: 400;
+  color: var(--ember);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.6rem;
+  transition: color 2s ease;
+}
+
+.sky-data {
+  color: var(--bone);
+  font-size: var(--type-hero-body);
+  line-height: 1.9;
+}
+
+.weather-mood-text {
+  color: var(--ash);
+  font-style: italic;
+  font-size: var(--type-hero-body);
+  line-height: 1.9;
+}
+
 .season-note {
   color: var(--ash);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.8;
+  margin-top: 0.8rem;
 }
 
-.haiku {
-  margin-bottom: 3rem;
-  padding: 0.8rem 0;
+
+/* --- haiku --- */
+
+.hero-haiku {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  transition: opacity 0.4s ease;
+  justify-content: center;
+  padding-top: 1rem;
 }
 
-.haiku blockquote {
+.hero-haiku blockquote {
   color: var(--ash);
   font-style: italic;
-  font-size: 0.82rem;
-  line-height: 1.8;
+  font-size: 1.1rem;
+  line-height: 2;
   letter-spacing: 0.02em;
+  opacity: 0;
+  animation: word-in 0.3s ease-out forwards;
 }
 
-.haiku .haiku-line {
+.hero-haiku .haiku-line {
   display: block;
+  white-space: nowrap;
 }
 
-.haiku .haiku-line:nth-child(2) {
-  padding-left: 1rem;
+.hero-haiku .haiku-line:nth-child(2) {
+  padding-left: 1.2rem;
 }
 
-.haiku .haiku-line:nth-child(3) {
-  padding-left: 2rem;
+.hero-haiku .haiku-line:nth-child(3) {
+  padding-left: 2.4rem;
 }
 
-.haiku cite {
+.hero-haiku cite {
   display: block;
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
   color: var(--bark);
   font-size: 0.72rem;
   font-style: normal;
   letter-spacing: 0.04em;
 }
 
-.weather-mood {
-  margin-bottom: 3rem;
-  padding: 1.2rem 0;
-  border-bottom: none;
+
+/* --- wisdom (time-based, in hero) --- */
+
+.wisdom {
+  margin-top: 2.5rem;
   transition: opacity 0.4s ease;
 }
 
-.weather-mood h2 {
-  font-size: 1.1rem;
-  font-weight: 500;
+.wisdom .entry h2 {
+  font-size: var(--type-hero-label);
+  font-weight: 400;
   color: var(--ember);
-  margin-bottom: 0.8rem;
   letter-spacing: 0.02em;
+  margin-bottom: 0.6rem;
   transition: color 2s ease;
 }
 
-.weather-mood p {
-  color: var(--ash);
-  font-style: italic;
-  font-size: 0.95rem;
-  line-height: 1.9;
-}
-
-.sky {
-  margin-bottom: 3rem;
-  padding-bottom: 1.5rem;
-  border-bottom: none;
-  transition: opacity 0.4s ease;
-}
-
-.sky h2 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--ember);
-  margin-bottom: 0.8rem;
-  letter-spacing: 0.02em;
-  transition: color 2s ease;
-}
-
-.sky p {
+.wisdom .entry p,
+.wisdom .entry div {
   color: var(--bone);
-  font-size: 0.95rem;
+  font-size: var(--type-hero-body);
   line-height: 1.9;
 }
 
-.almanac {
-  display: flex;
-  flex-direction: column;
-  gap: 2.8rem;
-  transition: opacity 0.4s ease;
-}
 
-.almanac .entry + .entry::before {
-  content: '*';
-  display: block;
-  text-align: center;
-  color: var(--bark);
-  font-size: 0.9rem;
-  letter-spacing: 0.5em;
-  margin-bottom: 2.8rem;
-  opacity: 0;
-  animation: word-in 0.3s ease-out forwards;
-}
-
-.entry h2 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--ember);
-  margin-bottom: 0.8rem;
-  letter-spacing: 0.02em;
-  transition: color 2s ease;
-}
-
-.entry p,
-.entry div {
-  color: var(--bone);
-  font-size: 0.95rem;
-  line-height: 1.9;
-}
-
-.entry ul {
-  list-style: none;
-  padding: 0;
-}
-
-.entry ul li {
-  color: var(--bone);
-  font-size: 0.95rem;
-  line-height: 1.9;
-  padding-left: 1.2rem;
-  position: relative;
-  opacity: 0;
-  animation: word-in 0.3s ease-out forwards;
-}
-
-.entry ul li::before {
-  content: '\00b7';
-  position: absolute;
-  left: 0;
-  color: var(--sprout);
-  font-weight: 500;
-  animation: rustle 4s ease-in-out infinite;
-  transition: color 2s ease;
-}
-
-.entry ul li:nth-child(2n)::before { animation-delay: -1.3s; }
-.entry ul li:nth-child(3n)::before { animation-delay: -2.7s; }
-.entry ul li:nth-child(5n)::before { animation-delay: -0.6s; }
+/* --- seasons nav --- */
 
 .seasons-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 0.6rem;
-  margin-top: 1rem;
+  gap: 0.2rem 0.5rem;
+  margin-top: 2.5rem;
 }
 
 .seasons-nav a {
-  color: var(--bark);
+  color: var(--ash);
   text-decoration: none;
   font-size: 0.8rem;
   font-style: italic;
@@ -268,7 +271,7 @@ h1 {
 }
 
 .seasons-nav a:hover {
-  color: var(--ash);
+  color: var(--bone);
 }
 
 .seasons-nav a.active {
@@ -277,30 +280,257 @@ h1 {
 
 .seasons-nav a.return-now {
   color: var(--ember);
+  flex-basis: 100%;
 }
 
 .seasons-nav a::after {
-  content: ' \00b7';
-  color: var(--bark);
+  content: '\00b7';
+  color: var(--ash);
+  margin-left: 0.4rem;
+  opacity: 0.5;
 }
 
 .seasons-nav a:last-child::after {
   content: '';
 }
 
-footer {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: none;
+
+/* --- scroll cue --- */
+
+.scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, var(--ash), transparent);
+  animation: drift 3s ease-in-out infinite;
+}
+
+
+/* ===== GLOSSARY ===== */
+
+.glossary {
+  position: relative;
+  z-index: 10000;
+  background: var(--earth);
+  margin: 0 auto;
+  padding: 8rem 2rem 6rem;
+  transition: background-color 2s ease;
+}
+
+.glossary-header {
+  max-width: 56rem;
+  margin: 0 auto 2rem;
+  text-align: center;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--bark);
+}
+
+.glossary-note {
+  color: var(--ash);
+  font-style: italic;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+
+/* --- time-of-day nav --- */
+
+.times-nav {
+  max-width: 40rem;
+  margin: 0 auto 4rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.2rem 0.5rem;
+}
+
+.times-nav a {
+  color: var(--ash);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.3rem;
+  transition: color 0.6s ease;
+  cursor: pointer;
+  opacity: 0;
+  animation: word-in 0.4s ease-out forwards;
+}
+
+.times-nav a:hover {
+  color: var(--bone);
+}
+
+.times-nav a.active {
+  color: var(--sprout);
+}
+
+.times-nav a.return-now {
+  color: var(--ember);
+  flex-basis: 100%;
+  text-align: center;
+  margin-top: 0.3rem;
+}
+
+.times-nav a::after {
+  content: '\00b7';
+  color: var(--ash);
+  margin-left: 0.4rem;
+  opacity: 0.5;
+}
+
+.times-nav a:last-child::after,
+.times-nav a.return-now::after {
+  content: '';
+}
+
+
+/* --- glossary entries --- */
+
+.glossary-entries {
+  max-width: 40rem;
+  margin: 0 auto;
   transition: opacity 0.4s ease;
+}
+
+.glossary-entries .entry {
+  margin-bottom: 4rem;
+}
+
+.glossary-entries .entry h2 {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--ember);
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+  transition: color 2s ease;
+}
+
+.glossary-entries .entry p,
+.glossary-entries .entry > div {
+  color: var(--bone);
+  font-size: 0.95rem;
+  line-height: 1.9;
+}
+
+.glossary-entries .entry ul {
+  list-style: none;
+  padding: 0;
+}
+
+.glossary-entries .entry ul li {
+  color: var(--bone);
+  font-size: 0.95rem;
+  line-height: 1.85;
+  padding-left: 1.2rem;
+  position: relative;
+  opacity: 0;
+  animation: word-in 0.3s ease-out forwards;
+}
+
+.glossary-entries .entry ul li + li {
+  margin-top: 0.4rem;
+}
+
+.glossary-entries .entry ul li::before {
+  content: '\00b7';
+  position: absolute;
+  left: 0;
+  color: var(--sprout);
+  font-weight: 500;
+  animation: rustle 4s ease-in-out infinite;
+  transition: color 2s ease;
+}
+
+.glossary-entries .entry ul li:nth-child(2n)::before { animation-delay: -1.3s; }
+.glossary-entries .entry ul li:nth-child(3n)::before { animation-delay: -2.7s; }
+.glossary-entries .entry ul li:nth-child(5n)::before { animation-delay: -0.6s; }
+
+.glossary-entries .entry p + p {
+  margin-top: 0.6rem;
+}
+
+
+/* --- prose entries --- */
+
+.glossary-entries .entry[data-content-type="prose"] {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.glossary-entries .entry[data-content-type="prose"] p {
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 2.1;
+  color: var(--ash);
+}
+
+
+/* --- mixed entries (list + closing prose) --- */
+
+.glossary-entries .entry[data-content-type="mixed"] > div > p {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(42,36,32,0.3);
+  font-style: italic;
+  color: var(--ash);
+  font-size: 0.92rem;
+  line-height: 2;
+}
+
+
+/* --- wisdom entry list items (in hero) --- */
+
+.wisdom .entry ul {
+  list-style: none;
+  padding: 0;
+}
+
+.wisdom .entry ul li {
+  color: var(--bone);
+  font-size: var(--type-hero-body);
+  line-height: 1.9;
+  padding-left: 1.2rem;
+  position: relative;
+  opacity: 0;
+  animation: word-in 0.3s ease-out forwards;
+}
+
+.wisdom .entry ul li::before {
+  content: '\00b7';
+  position: absolute;
+  left: 0;
+  color: var(--sprout);
+  font-weight: 500;
+  animation: rustle 4s ease-in-out infinite;
+  transition: color 2s ease;
+}
+
+
+/* ===== FOOTER ===== */
+
+footer {
+  position: relative;
+  z-index: 10000;
+  background: var(--earth);
+  padding: 3rem 2rem 4rem;
+  text-align: center;
+  border-top: 1px solid var(--bark);
+  transition: opacity 0.4s ease, background-color 2s ease;
 }
 
 footer p {
   color: var(--ash);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-style: italic;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
+
+
+/* ===== SHARED ===== */
 
 .word {
   opacity: 0;
@@ -308,7 +538,8 @@ footer p {
   animation: word-in 0.3s ease-out forwards;
 }
 
-/* daylight layer */
+
+/* ===== LAYERS ===== */
 
 #sky-layer {
   position: fixed;
@@ -326,7 +557,8 @@ footer p {
   top: 0;
   left: 0;
   right: 0;
-  height: 120px;
+  height: 100vh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 9999;
   transition: background 4s ease;
@@ -336,6 +568,9 @@ footer p {
   background-color: var(--moss);
   color: var(--parchment);
 }
+
+
+/* ===== ANIMATIONS ===== */
 
 @keyframes word-in {
   from {
@@ -366,10 +601,44 @@ footer p {
   75% { transform: translateX(1px) scale(1.1); opacity: 0.9; }
 }
 
+@keyframes drift {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.6; transform: translateX(-50%) translateY(6px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 110vh;
+    min-height: 110dvh;
+    padding: 3rem 1.5rem 3rem;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem 0;
+  }
+
+  .hero-haiku {
+    padding-top: 0;
+  }
+
+  .hero-lower {
+    grid-template-columns: 1fr;
+    gap: 2rem 0;
+  }
+
+  .glossary-entries {
+    max-width: 100%;
   }
 }
 
@@ -378,11 +647,19 @@ footer p {
     font-size: 16px;
   }
 
-  main {
-    padding: 3rem 1.2rem 4rem;
+  .hero {
+    padding: 2.5rem 1.2rem 3rem;
   }
 
-  h1 {
-    font-size: 2rem;
+  .hero-header h1 {
+    font-size: 3rem;
+  }
+
+  .glossary {
+    padding: 5rem 1rem 5rem;
+  }
+
+  footer {
+    padding: 2rem 1.2rem 3rem;
   }
 }
