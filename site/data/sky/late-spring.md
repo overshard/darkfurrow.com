@@ -11,3 +11,7 @@ section: what the stars are showing
 - corvus the crow, four stars in a small square, sits low in the south
 
 in the old almanacs, when arcturus stood high and orion was gone, it meant the soil was truly warm. plant anything now.
+
+spica in virgo was the grain sheaf in the goddess's hand. the romans timed their grain harvest by this star. its name comes from the latin for "ear of wheat." it appears with the planting and leaves with the reaping.
+
+corvus the crow was placed in the sky by apollo as punishment for bringing bad news. the old farmers saw the four stars and thought of the real crows in their fields, always watching, always waiting for the seeds.

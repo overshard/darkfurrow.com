@@ -11,3 +11,7 @@ section: what the stars are showing
 - the winter triangle (betelgeuse, sirius, procyon) fades lower each night
 
 the old farmers watched orion leave and knew the planting was close. when he disappears below the western horizon, the frost is nearly done.
+
+arcturus was the star the old plowmen followed. its name means "bear watcher" in greek, because it follows ursa major across the sky. but to the farmers it simply meant warmth is returning. when it rises at sunset, the soil is ready.
+
+regulus, the heart of the lion, was another of the four royal stars of persia. it marked the summer solstice four thousand years ago. the name means "little king," and in spring it rules the high sky.
