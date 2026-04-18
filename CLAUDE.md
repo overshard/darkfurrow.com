@@ -28,6 +28,11 @@ page that breathes with the seasons.
 - All content data lives in markdown files under data/. No hardcoded
   content in Python code.
 - `make run` starts the Flask dev server on 0.0.0.0:8000.
+- Production runs via `docker-compose` (Gunicorn, 2 workers) bound to
+  `127.0.0.1:${PORT}` where `PORT` comes from `.env` (8500 on the deployed host).
+- Routes: `/` renders the page; `/api/content` returns the same content as JSON
+  for the client-side auto-refresh. Both accept `?season=` and `?time=`
+  query-string overrides for previewing other times of day or year.
 - The site lives at darkfurrow.com.
 - Target planting zone is 7a (North Carolina) to start, but the structure
   should allow for expansion to other zones later.
