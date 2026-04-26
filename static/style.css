@@ -300,39 +300,62 @@ main {
 }
 
 
-/* ===== HAIKU ==================================================== */
+/* ===== HAIKU ====================================================
+ * a quiet verse between the season note and the buckets. styled as
+ * a printed chapter-break: a short centered hairline rule with a
+ * tiny ember mark on it, then the verse in italic. left-aligned
+ * inside a centered inline-block so the staircase reads naturally.
+ * ================================================================ */
 
 .haiku-block {
   margin: 0 auto 4rem;
   text-align: center;
-  padding: 1.5rem 0;
+  padding-top: 2.2rem;
   position: relative;
 }
 
-.haiku-block::before,
-.haiku-block::after {
-  content: '❦';
-  display: block;
-  text-align: center;
-  color: var(--ember);
-  opacity: 0.35;
-  font-size: 0.85rem;
-  line-height: 1;
+/* short centered hairline rule */
+.haiku-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6rem;
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent,
+    rgba(140, 110, 80, 0.35) 18%,
+    rgba(140, 110, 80, 0.35) 82%,
+    transparent);
 }
 
-.haiku-block::before { margin-bottom: 1.4rem; }
-.haiku-block::after  { margin-top: 1.4rem; }
+/* small ember mark sitting on the rule */
+.haiku-block::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ember);
+  opacity: 0.55;
+  box-shadow: 0 0 10px rgba(212, 165, 116, 0.45);
+}
 
 .haiku-block blockquote {
   display: inline-block;
   text-align: left;
   font-family: var(--serif);
-  font-variation-settings: 'opsz' 24, 'SOFT' 90, 'wght' 320;
+  font-variation-settings: 'opsz' 36, 'SOFT' 100, 'wght' 320;
   font-style: italic;
-  font-size: 1.08rem;
-  line-height: 2.1;
+  font-size: 1.16rem;
+  line-height: 2.05;
   color: var(--parchment);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.005em;
+  margin-top: 1.6rem;
 }
 
 .haiku-block .haiku-line {
@@ -340,8 +363,8 @@ main {
   white-space: nowrap;
 }
 
-.haiku-block .haiku-line:nth-child(2) { padding-left: 1.4rem; }
-.haiku-block .haiku-line:nth-child(3) { padding-left: 2.8rem; }
+.haiku-block .haiku-line:nth-child(2) { padding-left: 1rem; }
+.haiku-block .haiku-line:nth-child(3) { padding-left: 2rem; }
 
 
 /* ===== BUCKETS (sections) =======================================
