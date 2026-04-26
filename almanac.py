@@ -13,7 +13,8 @@ import re
 import mistune
 
 
-LAT = 35.78  # north carolina, zone 7a
+LAT = 35.78   # north carolina, zone 7a (raleigh)
+LON = -78.64  # degrees east; negative for west
 
 _md = mistune.create_markdown()
 
@@ -155,12 +156,71 @@ def parse_list_items(body):
 
 # --- sky calculations ---
 
+SYNODIC_MONTH = 29.53058867
+
+
+def _julian_day(dt_utc):
+    """julian day for a utc datetime (gregorian)."""
+    y, m = dt_utc.year, dt_utc.month
+    d = dt_utc.day + (dt_utc.hour + (dt_utc.minute + dt_utc.second / 60) / 60) / 24
+    if m <= 2:
+        y -= 1
+        m += 12
+    a = y // 100
+    b = 2 - a + a // 4
+    return int(365.25 * (y + 4716)) + int(30.6001 * (m + 1)) + d + b - 1524.5
+
+
+def _to_utc(date):
+    from datetime import timezone
+    return date.replace(tzinfo=timezone.utc) if date.tzinfo is None else date.astimezone(timezone.utc)
+
+
+def _moon_state(date):
+    """return (age_days, illuminated_fraction) using meeus's lunar series.
+    accurate to ~0.5° in elongation and ~0.5% in illumination."""
+    T = (_julian_day(_to_utc(date)) - 2451545.0) / 36525.0
+    D  = (297.8501921 + 445267.1114034 * T) % 360
+    Ms = (357.5291092 +  35999.0502909 * T) % 360  # sun's mean anomaly
+    Mm = (134.9633964 + 477198.8675055 * T) % 360  # moon's mean anomaly
+    F  = ( 93.2720950 + 483202.0175233 * T) % 360  # argument of latitude
+    Dr, Msr, Mmr, Fr = map(math.radians, (D, Ms, Mm, F))
+    # selected longitude perturbations from meeus table 47.A
+    dL_moon = (
+        6.288774 * math.sin(Mmr)
+        + 1.274027 * math.sin(2 * Dr - Mmr)
+        + 0.658314 * math.sin(2 * Dr)
+        + 0.213618 * math.sin(2 * Mmr)
+        - 0.185116 * math.sin(Msr)
+        - 0.114332 * math.sin(2 * Fr)
+        + 0.058793 * math.sin(2 * Dr - 2 * Mmr)
+        + 0.057066 * math.sin(2 * Dr - Msr - Mmr)
+        + 0.053322 * math.sin(2 * Dr + Mmr)
+        + 0.045758 * math.sin(2 * Dr - Msr)
+        - 0.040923 * math.sin(Msr - Mmr)
+        - 0.034720 * math.sin(Dr)
+        - 0.030383 * math.sin(Msr + Mmr)
+    )
+    # sun's equation of center
+    dL_sun = (
+        1.914602 * math.sin(Msr)
+        + 0.019993 * math.sin(2 * Msr)
+        + 0.000289 * math.sin(3 * Msr)
+    )
+    elong = (D + dL_moon - dL_sun) % 360
+    age = elong / 360.0 * SYNODIC_MONTH
+    illum = (1 - math.cos(math.radians(elong))) / 2
+    return age, illum
+
+
 def moon_phase(date):
-    from datetime import datetime, timezone
-    known = datetime(2000, 1, 6, 18, 14, 0, tzinfo=timezone.utc)
-    synodic = 29.53058867
-    diff = (date.timestamp() - known.timestamp()) / 86400
-    return ((diff % synodic) + synodic) % synodic
+    """days into the lunation cycle (0..29.53), based on true elongation."""
+    return _moon_state(date)[0]
+
+
+def moon_illumination(date):
+    """illuminated fraction of the moon's disc (0..1)."""
+    return _moon_state(date)[1]
 
 
 def moon_name(phase):
@@ -183,18 +243,55 @@ def moon_name(phase):
     return 'new moon'
 
 
-def moon_illumination(phase):
-    return (1 - math.cos(2 * math.pi * phase / 29.53058867)) / 2
-
-
-def daylight_hours(date, lat=LAT):
-    doy = date.timetuple().tm_yday
+def sun_times(local_date):
+    """return (sunrise_local_hours, sunset_local_hours, day_length_hours) for the
+    given local-tz date. uses noaa's spencer fourier series; accounts for
+    longitude, equation of time, atmospheric refraction (sun's center 0.833°
+    below horizon), and converts to the date's local timezone (handles dst).
+    accurate to ~1 minute."""
+    from datetime import datetime, timedelta, timezone
     import calendar
-    year_len = 366 if calendar.isleap(date.year) else 365
-    decl = 23.45 * math.sin((2 * math.pi / year_len) * (doy - 81))
-    cos_h = -math.tan(math.radians(lat)) * math.tan(math.radians(decl))
-    cos_h = max(-1, min(1, cos_h))
-    return (2 * math.degrees(math.acos(cos_h))) / 15
+    year = local_date.year
+    doy = local_date.timetuple().tm_yday
+    year_len = 366 if calendar.isleap(year) else 365
+    gamma = (2 * math.pi / year_len) * (doy - 1)
+    eot = 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+    decl = (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.001480 * math.sin(3 * gamma)
+    )
+    lat_rad = math.radians(LAT)
+    cos_ha = (
+        math.cos(math.radians(90.833))
+        - math.sin(lat_rad) * math.sin(decl)
+    ) / (math.cos(lat_rad) * math.cos(decl))
+    cos_ha = max(-1, min(1, cos_ha))
+    ha = math.degrees(math.acos(cos_ha))
+    solar_noon_min = 720 - 4 * LON - eot
+    sr_min = solar_noon_min - 4 * ha
+    ss_min = solar_noon_min + 4 * ha
+    tz = local_date.tzinfo
+    base = datetime(year, local_date.month, local_date.day, tzinfo=timezone.utc)
+    sr = (base + timedelta(minutes=sr_min)).astimezone(tz)
+    ss = (base + timedelta(minutes=ss_min)).astimezone(tz)
+    sr_h = sr.hour + sr.minute / 60 + sr.second / 3600
+    ss_h = ss.hour + ss.minute / 60 + ss.second / 3600
+    return sr_h, ss_h, (ss_min - sr_min) / 60
+
+
+def daylight_hours(date):
+    return sun_times(date)[2]
 
 
 def format_hm(hours):
@@ -240,12 +337,10 @@ def sky_data_lines(now):
     from datetime import timedelta
     phase = moon_phase(now)
     name = moon_name(phase)
-    illum = round(moon_illumination(phase) * 100)
-    hours = daylight_hours(now)
-    gained = (hours - daylight_hours(now - timedelta(days=1))) * 60
+    illum = round(moon_illumination(now) * 100)
+    sunrise, sunset, hours = sun_times(now)
+    gained = (hours - sun_times(now - timedelta(days=1))[2]) * 60
     sign = '+' if gained > 0 else ''
-    sunrise = 12 - hours / 2
-    sunset = 12 + hours / 2
     return [
         f'<strong>{name}</strong>, {illum}% lit',
         f'sunrise <strong>{format_clock(sunrise)}</strong> \u00b7 sunset <strong>{format_clock(sunset)}</strong>',
