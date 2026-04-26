@@ -212,7 +212,7 @@
     dom.dateLine = document.querySelector('.date-line');
     dom.seasonName = document.querySelector('.season-name');
     dom.seasonNote = document.querySelector('.season-note');
-    dom.haikuBlock = document.querySelector('.flow-haiku blockquote');
+    dom.haikuBlock = document.querySelector('.haiku-block blockquote');
     dom.sections = document.querySelector('.sections');
     dom.footerStatus = document.querySelector('.footer-status');
     dom.readout = document.querySelector('.readout');
@@ -221,7 +221,7 @@
   }
 
   function loadContent(seasonOverride) {
-    var fadeTargets = ['.flow-season', '.flow-haiku', '.sections', 'footer'];
+    var fadeTargets = ['.season-block', '.haiku-block', '.sections', 'footer'];
     fadeTargets.forEach(function (sel) {
       var el = document.querySelector(sel);
       if (el) el.style.opacity = '0';
