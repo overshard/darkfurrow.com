@@ -101,17 +101,6 @@ TIMES = [
     {'name': 'night',     'start': 21, 'end': 24},
 ]
 
-TIME_LABELS = ['night', 'dawn', 'morning', 'afternoon', 'evening']
-
-TIME_CONTENT = {
-    'night':     ['sky/', 'names/', 'remedies/', 'storms/'],
-    'dawn':      ['planting/', 'foraging/'],
-    'morning':   ['planting/', 'chores/', 'bugs/'],
-    'afternoon': ['kitchen/', 'bugs/', 'chores/'],
-    'evening':   ['kitchen/', 'remedies/', 'foraging/', 'names/', 'storms/'],
-}
-
-
 def get_time_of_day(date):
     h = date.hour
     for t in TIMES:
@@ -162,37 +151,6 @@ def parse_list_items(body):
         prose.append(current_prose.strip())
 
     return {'bullets': bullets, 'prose': prose}
-
-
-def highlight_text(text):
-    fragments = re.split(r'(?<=\.)\s+', text)
-    result = []
-    for frag in fragments:
-        trimmed = frag.strip()
-        if not trimmed:
-            continue
-        plain = re.sub(r'</?strong>', '', trimmed)
-        words = plain.split()
-
-        if len(words) <= 4:
-            result.append(f'<strong>{trimmed}</strong>')
-            continue
-
-        if '<strong>' in trimmed:
-            result.append(trimmed)
-            continue
-
-        comma = trimmed.find(',')
-        if 0 < comma < 30:
-            result.append(f'<strong>{trimmed[:comma]}</strong>{trimmed[comma:]}')
-            continue
-
-        first = words[0].lower()
-        count = 3 if first in ('the', 'a', 'an', 'if', 'when', 'it', 'and', 'or', 'but', 'do', 'in') else 2
-        count = min(count, len(words))
-        result.append(f'<strong>{" ".join(words[:count])}</strong> {" ".join(words[count:])}')
-
-    return ' '.join(result)
 
 
 # --- sky calculations ---
@@ -277,39 +235,22 @@ def written_date(date):
     return f'{time}, the {ORDINALS[date.day]} of {MONTHS[date.month - 1]}'
 
 
-def sky_text(now, time):
+def sky_data_lines(now):
+    """three short lines: moon, sun, daylight. shown in the sky section."""
+    from datetime import timedelta
     phase = moon_phase(now)
     name = moon_name(phase)
     illum = round(moon_illumination(phase) * 100)
     hours = daylight_hours(now)
-    from datetime import timedelta
-    yesterday = now - timedelta(days=1)
-    gained = (hours - daylight_hours(yesterday)) * 60
+    gained = (hours - daylight_hours(now - timedelta(days=1))) * 60
     sign = '+' if gained > 0 else ''
     sunrise = 12 - hours / 2
     sunset = 12 + hours / 2
-
-    bold_name = f'<strong>{name}</strong>'
-    lines = []
-
-    if time == 'night':
-        lines.append(f'the moon is {bold_name}, {illum}% lit.')
-        lines.append('the world is turned away from the sun.')
-        lines.append(f'<strong>{format_hm(hours)}</strong> of daylight today. {sign}{gained:.1f} minutes from yesterday.')
-    elif time == 'dawn':
-        lines.append(f'the sun rises around <strong>{format_clock(sunrise)}</strong>.')
-        lines.append(f'the moon is {bold_name}, {illum}% lit.')
-        lines.append(f'<strong>{format_hm(hours)}</strong> of daylight ahead. it sets around {format_clock(sunset)}.')
-    elif time == 'evening':
-        lines.append(f'the sun set around <strong>{format_clock(sunset)}</strong>.')
-        lines.append(f'the moon is {bold_name}, {illum}% lit.')
-        lines.append(f'there were <strong>{format_hm(hours)}</strong> of daylight today. {sign}{gained:.1f} minutes from yesterday.')
-    else:
-        lines.append(f'the moon is {bold_name}, {illum}% lit.')
-        lines.append(f'the sun rose around <strong>{format_clock(sunrise)}</strong> and sets around <strong>{format_clock(sunset)}</strong>.')
-        lines.append(f'<strong>{format_hm(hours)}</strong> of daylight today. {sign}{gained:.1f} minutes from yesterday.')
-
-    return '<br>'.join(lines)
+    return [
+        f'<strong>{name}</strong>, {illum}% lit',
+        f'sunrise <strong>{format_clock(sunrise)}</strong> \u00b7 sunset <strong>{format_clock(sunset)}</strong>',
+        f'<strong>{format_hm(hours)}</strong> of daylight ({sign}{gained:.1f} minutes from yesterday)',
+    ]
 
 
 # --- data loading ---
@@ -326,7 +267,6 @@ def load_seasons(data_dir):
     """load season definitions from data/seasons/*.md"""
     seasons_dir = os.path.join(data_dir, 'seasons')
     seasons = []
-    seen = {}
 
     for filename in sorted(os.listdir(seasons_dir)):
         if not filename.endswith('.md'):
@@ -346,10 +286,7 @@ def load_seasons(data_dir):
             'note': note,
         }
 
-        # primary date range
         seasons.append(entry)
-        if name not in seen:
-            seen[name] = entry
 
         # winter has a second range (dec)
         if 'start-alt' in meta:
@@ -363,6 +300,14 @@ def load_seasons(data_dir):
 
     # sort by start month/day so lookup order is correct
     seasons.sort(key=lambda s: (s['start'][0], s['start'][1]))
+
+    # build the canonical-order map after sorting so the nav reads
+    # winter -> early spring -> ... -> late fall instead of alphabetical
+    seen = {}
+    for s in seasons:
+        if s['name'] not in seen:
+            seen[s['name']] = s
+
     return seasons, seen
 
 
@@ -523,132 +468,218 @@ def moon_garden_tip(phase, moon_tips):
     return moon_tips[-1][2] if moon_tips else ''
 
 
+# --- section builders ---
+# each builder returns a dict: {key, title, intro, groups, lore}
+# - groups: [{label, items: [html, ...]}] rendered as labeled bullet lists
+# - lore: [html, ...] rendered as short prose paragraphs
+
+
+def _read_md(path, files):
+    body = files.get(path)
+    if not body:
+        return None
+    return parse_frontmatter(body)
+
+
+def _section_sky(now, season, data, rng):
+    files = data['files']
+    intro = get_weather_mood(season['name'], get_time_of_day(now), data['moods'])
+
+    lore = []
+    tip = moon_garden_tip(moon_phase(now), data['moon_tips'])
+    if tip:
+        lore.append(render_md(tip))
+
+    for path in (f"sky/{season['name']}.md", f"storms/{season['name']}.md"):
+        parsed = _read_md(path, files)
+        if not parsed:
+            continue
+        items = parse_list_items(parsed['body'])
+        candidates = items['bullets'] + items['prose']
+        if candidates:
+            pick = pick_items(candidates, 1, rng)[0]
+            lore.append(render_md(pick))
+
+    return {
+        'key': 'sky',
+        'title': 'sky',
+        'intro': intro,
+        'groups': [{'label': '', 'items': sky_data_lines(now)}],
+        'lore': lore,
+    }
+
+
+def _section_garden(season, data, rng):
+    files = data['files']
+    groups = []
+
+    parsed = _read_md(f"planting/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            picks = pick_items(items['bullets'], min(4, len(items['bullets'])), rng)
+            groups.append({
+                'label': 'in the ground now',
+                'items': [render_md(p) for p in picks],
+            })
+
+    parsed = _read_md(f"planting/{season['name']}-indoors.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            picks = pick_items(items['bullets'], min(3, len(items['bullets'])), rng)
+            groups.append({
+                'label': 'starting indoors',
+                'items': [render_md(p) for p in picks],
+            })
+
+    parsed = _read_md(f"chores/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            picks = pick_items(items['bullets'], min(2, len(items['bullets'])), rng)
+            groups.append({
+                'label': 'this week',
+                'items': [render_md(p) for p in picks],
+            })
+
+    return {'key': 'garden', 'title': 'garden', 'intro': '', 'groups': groups, 'lore': []}
+
+
+def _section_kitchen(season, data, rng):
+    files = data['files']
+    groups = []
+    parsed = _read_md(f"kitchen/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        bullets = list(items['bullets'])
+        if bullets:
+            picks = pick_items(bullets, min(4, len(bullets)), rng)
+            groups.append({
+                'label': 'in season',
+                'items': [render_md(p) for p in picks],
+            })
+            remaining = [b for b in bullets if b not in picks]
+            tonight = pick_items(remaining, 1, rng)[0] if remaining else picks[-1]
+            groups.append({
+                'label': 'tonight',
+                'items': [render_md(tonight)],
+            })
+    return {'key': 'kitchen', 'title': 'kitchen', 'intro': '', 'groups': groups, 'lore': []}
+
+
+def _section_foraging(season, data, rng):
+    files = data['files']
+    groups = []
+    lore = []
+    parsed = _read_md(f"foraging/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            picks = pick_items(items['bullets'], min(4, len(items['bullets'])), rng)
+            groups.append({'label': '', 'items': [render_md(p) for p in picks]})
+        if items['prose']:
+            lore.append(render_md(items['prose'][0]))
+    return {'key': 'foraging', 'title': 'foraging', 'intro': '', 'groups': groups, 'lore': lore}
+
+
+def _section_folklore(season, data, rng):
+    files = data['files']
+    lore = []
+
+    parsed = _read_md(f"names/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['prose']:
+            lore.append(render_md(items['prose'][0]))
+        elif items['bullets']:
+            picks = pick_items(items['bullets'], min(2, len(items['bullets'])), rng)
+            lore.append(' '.join(render_md(p) for p in picks))
+
+    parsed = _read_md(f"remedies/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        parts = []
+        if items['bullets']:
+            parts.append(render_md(pick_items(items['bullets'], 1, rng)[0]))
+        if items['prose']:
+            parts.append(render_md(items['prose'][0]))
+        if parts:
+            lore.append(' '.join(parts))
+
+    parsed = _read_md(f"bugs/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            lore.append(render_md(pick_items(items['bullets'], 1, rng)[0]))
+
+    return {'key': 'folklore', 'title': 'folklore', 'intro': '', 'groups': [], 'lore': lore}
+
+
+SECTION_BUILDERS = [_section_sky, _section_garden, _section_kitchen, _section_foraging, _section_folklore]
+
+
+def render_sections_html(sections):
+    """render the section list to a single HTML string used by both
+    the server-side template and the JSON API response."""
+    parts = []
+    for s in sections:
+        if not s['groups'] and not s['lore'] and not s.get('intro'):
+            continue
+        parts.append(f'<section class="bucket bucket-{s["key"]}">')
+        parts.append(f'<h2>{s["title"]}</h2>')
+        if s.get('intro'):
+            parts.append(f'<p class="bucket-intro">{s["intro"]}</p>')
+        for g in s['groups']:
+            if g.get('label'):
+                parts.append(f'<p class="bucket-label">{g["label"]}</p>')
+            parts.append('<ul class="bucket-list">')
+            for item in g['items']:
+                parts.append(f'<li>{item}</li>')
+            parts.append('</ul>')
+        for line in s.get('lore', []):
+            parts.append(f'<p class="bucket-lore">{line}</p>')
+        parts.append('</section>')
+    return ''.join(parts)
+
+
 # --- content assembly ---
 
-def assemble_content(now, data, season_override=None, time_override=None):
+def assemble_content(now, data, season_override=None):
     """assemble the full page content for a given moment."""
     seasons = data['seasons']
     seasons_map = data['seasons_map']
-    manifest = data['manifest']
-    files = data['files']
 
     season = get_season_by_name(season_override, seasons_map) if season_override else get_season(now, seasons)
     real_time = get_time_of_day(now)
-    content_time = time_override or real_time
 
-    # date line
-    date_line = written_date(now)
-
-    # season header
     note_html = render_md_block(season['note'])
     nxt = days_until_next_season(now, seasons)
     if nxt['days'] <= 7:
         note_html += '<p>' + nxt['label'] + ' begins in ' + str(nxt['days']) + (' day.' if nxt['days'] == 1 else ' days.') + '</p>'
 
-    # haiku
     haiku_lines = get_haiku(season['name'], now, data['haiku'])
     haiku_html = ''
     if haiku_lines:
         haiku_html = ''.join(f'<span class="haiku-line">{line}</span>' for line in haiku_lines)
 
-    # moon phase for garden tip
-    phase = moon_phase(now)
+    rng = seeded_random(day_hash(now))
+    sections = [build(now, season, data, rng) if build is _section_sky else build(season, data, rng)
+                for build in SECTION_BUILDERS]
+    sections_html = render_sections_html(sections)
 
-    # weather mood
-    weather_mood = get_weather_mood(season['name'], content_time, data['moods'])
-
-    # sky data
-    sky_data = sky_text(now, content_time)
-
-    # footer
     footer_text = f"{nxt['days']} days until {nxt['label']} \u00b7 zone 7a \u00b7 north carolina"
 
-    # seed the rng for today
-    rng = seeded_random(day_hash(now))
-
-    # filter manifest
-    allowed_prefixes = TIME_CONTENT.get(content_time, [])
-    relevant = []
-    for entry in manifest:
-        if 'time' in entry:
-            if entry['time'] == content_time:
-                relevant.append(entry)
-        elif 'season' in entry:
-            if entry['season'] != season['name']:
-                continue
-            for prefix in allowed_prefixes:
-                if entry['path'].startswith(prefix):
-                    relevant.append(entry)
-                    break
-
-    # parse entries
-    entries = []
-    for entry in relevant:
-        text = files.get(entry['path'])
-        if text is None:
-            continue
-        entries.append(parse_frontmatter(text))
-
-    # collect fragments
-    fragments = []
-    fragments.append(moon_garden_tip(phase, data['moon_tips']))
-
-    # wisdom lines
-    for entry in entries:
-        if 'time' not in entry['meta']:
-            continue
-        lines = [l.strip() for l in entry['body'].split('\n') if l.strip()]
-        if not lines:
-            continue
-        picks = pick_items(lines, min(2, len(lines)), rng)
-        fragments.extend(picks)
-
-    # seasonal entries
-    for entry in entries:
-        if 'time' in entry['meta']:
-            continue
-        parsed = parse_list_items(entry['body'])
-
-        if parsed['bullets']:
-            picks = pick_items(parsed['bullets'], 1, rng)
-            fragments.extend(picks)
-
-        if parsed['prose']:
-            prose_pick = pick_items(parsed['prose'], 1, rng)
-            fragments.append(prose_pick[0])
-
-    # shuffle
-    for i in range(len(fragments) - 1, 0, -1):
-        j = int(rng() * (i + 1))
-        fragments[i], fragments[j] = fragments[j], fragments[i]
-
-    # compose into paragraphs
-    sep = ' <span class="sep">\u2767</span> '
-    chunk_size = min(4, max(1, math.ceil(len(fragments) / 2)))
-    narrative_html = ''
-    for c in range(0, len(fragments), chunk_size):
-        chunk = fragments[c:c + chunk_size]
-        html = sep.join(highlight_text(render_md(f)) for f in chunk)
-        narrative_html += f'<p class="narrative">{html}</p>'
-
-    # build nav html
-    season_nav_html = build_season_nav(season, seasons_map)
-    time_nav_html = build_time_nav(content_time, real_time)
-
     return {
-        'date_line': date_line,
+        'date_line': written_date(now),
         'season_name': season['label'],
         'season_note': note_html,
         'season_key': season['name'],
         'time_key': real_time,
-        'content_time': content_time,
         'haiku_html': haiku_html,
-        'weather_mood': weather_mood,
-        'sky_data': sky_data,
-        'narrative_html': narrative_html,
+        'sections_html': sections_html,
         'footer_text': footer_text,
-        'season_nav_html': season_nav_html,
-        'time_nav_html': time_nav_html,
+        'season_nav_html': build_season_nav(season, seasons_map),
     }
 
 
@@ -659,14 +690,4 @@ def build_season_nav(active_season, seasons_map):
     for name, s in seasons_map.items():
         cls = ' class="active" aria-current="true"' if s['name'] == active_season['name'] else ''
         html += f'<a data-season="{s["name"]}"{cls}>{s["label"]}</a>'
-    return html
-
-
-def build_time_nav(active_time, natural_time):
-    html = ''
-    for t in TIME_LABELS:
-        cls = ' class="active" aria-current="true"' if t == active_time else ''
-        html += f'<a data-time="{t}"{cls}>{t}</a>'
-    if active_time != natural_time:
-        html += '<a class="return-now" data-time="now">return to now</a>'
     return html

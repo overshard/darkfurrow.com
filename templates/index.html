@@ -6,7 +6,7 @@
   <title>dark furrow / old knowledge preserved</title>
   <meta name="description" content="a seasonal almanac of planting, harvest, moon phases, and forgotten rhythms. what to grow, what to cook, what the sky is doing. tended by hand for zone 7a.">
   <meta name="author" content="isaac bythewood">
-  <meta name="theme-color" content="#0e0c0a">
+  <meta name="theme-color" content="#16110d">
   <meta name="color-scheme" content="dark">
 
   <!-- open graph -->
@@ -29,51 +29,49 @@
   <meta name="generator" content="hand and soil">
   <link rel="canonical" href="https://darkfurrow.com">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+
+  <!-- typography is self-hosted from /static/fonts/ via @font-face in
+       style.css. no third-party font cdn calls at runtime. -->
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body data-time="{{ time_key }}" data-season="{{ season_key }}">
 
+  <div class="glow" aria-hidden="true"></div>
   <div id="sky-layer"></div>
   <div id="time-layer"></div>
+  <div class="grain" aria-hidden="true"></div>
 
   <main>
     <article class="readout">
-      <p class="date-line">{{ date_line }}</p>
 
-      <header class="readout-header">
-        <h1>dark furrow</h1>
-        <p class="subtitle">old knowledge preserved</p>
+      <header class="masthead">
+        <span class="masthead-mark">MMXXVI</span>
+        <span class="masthead-mark">ZONE&nbsp;VII·A</span>
+        <span class="masthead-mark">35°N</span>
       </header>
 
-      <section class="flow flow-season">
+      <section class="title-block">
+        <h1 class="wordmark">dark furrow</h1>
+        <p class="wordmark-sub">old knowledge preserved</p>
+      </section>
+
+      <p class="date-line">{{ date_line }}</p>
+
+      <section class="season-block">
         <p class="season-name">{{ season_name }}</p>
         <div class="season-note">{{ season_note|safe }}</div>
       </section>
 
-      <section class="flow flow-sky">
-        <p class="weather-mood-text">{{ weather_mood|safe }}</p>
-        <p class="sky-data">{{ sky_data|safe }}</p>
-      </section>
-
-      <section class="flow flow-haiku">
+      <section class="haiku-block">
         <blockquote>{{ haiku_html|safe }}</blockquote>
       </section>
 
-      <section class="wisdom"></section>
-
-      <section class="flow flow-entries">{{ narrative_html|safe }}</section>
-
-      <div class="nav-drawer">
-        <a class="nav-toggle">...explore</a>
-        <div class="nav-drawer-content">
-          <nav class="nav-strip seasons-nav">{{ season_nav_html|safe }}</nav>
-          <nav class="nav-strip times-nav">{{ time_nav_html|safe }}</nav>
-        </div>
-      </div>
+      <div class="sections">{{ sections_html|safe }}</div>
     </article>
 
     <footer>
-      <p>{{ footer_text }}</p>
+      <p class="footer-status">{{ footer_text }}</p>
+      <nav class="seasons-nav">{{ season_nav_html|safe }}</nav>
       <p class="credit">a project by <a href="https://isaacbythewood.com">isaac bythewood</a></p>
     </footer>
   </main>

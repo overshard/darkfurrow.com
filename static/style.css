@@ -1,20 +1,78 @@
-:root {
-  --earth: #0e0c0a;
-  --bark: #2a2420;
-  --ash: #a89b8e;
-  --bone: #d4c8b8;
-  --parchment: #ece3d5;
-  --sprout: #7a9a62;
-  --moss: #5a7d4a;
-  --ember: #b07a50;
-  --glow: rgba(140,100,50,0.04);
-  --under1: rgba(26,23,20,0.7);
-  --under2: rgba(42,36,32,0.5);
-  --under3: rgba(26,23,20,0.4);
+/* ================================================================
+ * dark furrow / stylesheet
+ * editorial almanac. fraunces (variable, with opsz / SOFT / wonk
+ * axes) carries the serif voice; jetbrains mono carries the data
+ * voice. one ember accent. warm charcoal ground. svg grain over
+ * everything for paper-by-firelight texture.
+ *
+ * fonts are self-hosted woff2 from @fontsource. no third-party
+ * cdn calls at runtime.
+ * ================================================================ */
 
-  --type-title: clamp(2.8rem, 4vw + 1rem, 4.2rem);
-  --type-season: clamp(1.6rem, 2vw + 0.6rem, 2rem);
-  --type-body: clamp(0.95rem, 0.8vw + 0.6rem, 1.05rem);
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 25% 151%;
+  font-display: swap;
+  src: url('/static/fonts/fraunces-latin-full-normal.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 100 900;
+  font-stretch: 25% 151%;
+  font-display: swap;
+  src: url('/static/fonts/fraunces-latin-full-italic.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/static/fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+:root {
+  /* --- palette ---------------------------------------------------
+   * warmer than pitch black, leaning toward burnt walnut. one
+   * ember-gold accent does the heavy lifting; bone is body; ash
+   * is for italic and secondary text. moss only survives for
+   * ::selection (it's the most useful "alive" color we have).
+   * -------------------------------------------------------------- */
+  --earth:      #16110d;
+  --earth-2:    #1d1714;
+  --bark:       #2a2118;
+  --ash:        #8c8175;
+  --bone:       #d8cdb9;
+  --parchment:  #ebe1cc;
+  --ember:      #d4a574;
+  --ember-warm: #c8884c;
+  --moss:       #5a7d4a;
+
+  /* atmospheric layers — kept for the daylight cycle in JS */
+  --glow:   rgba(140, 100, 50, 0.04);
+  --under1: rgba(26, 23, 20, 0.7);
+  --under2: rgba(42, 36, 32, 0.5);
+  --under3: rgba(26, 23, 20, 0.4);
+
+  /* --- type ----------------------------------------------------- */
+  --serif: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, 'SFMono-Regular',
+           Menlo, Consolas, monospace;
+
+  /* fluid type scale — set only the few that vary by viewport */
+  --type-wordmark:  clamp(3.2rem, 5vw + 1.4rem, 5.4rem);
+  --type-season:    clamp(2.6rem, 3vw + 1.4rem, 4.2rem);
+  --type-section:   clamp(1.5rem, 1vw + 1rem, 1.9rem);
+  --type-body:      clamp(1.0rem, 0.4vw + 0.85rem, 1.12rem);
+  --type-meta:      0.72rem;
+
+  /* layout */
+  --measure: 36rem;
+  --rule:    1px solid rgba(140, 110, 80, 0.18);
 }
 
 * {
@@ -24,376 +82,27 @@
 }
 
 html {
-  font-size: 18px;
+  font-size: 17px;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background-color: var(--earth);
   color: var(--bone);
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.8;
-  -webkit-font-smoothing: antialiased;
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 50, 'wght' 380;
+  font-feature-settings: 'liga', 'kern', 'onum';
+  line-height: 1.7;
   transition: background-color 2s ease, color 2s ease;
+  min-height: 100vh;
 }
 
 main {
   position: relative;
-}
-
-
-/* ===== READOUT ===== */
-
-.readout {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 2rem;
-}
-
-
-/* --- header --- */
-
-.readout-header {
-  margin-bottom: 3rem;
-}
-
-.readout-header::after {
-  display: none;
-}
-
-.readout-header h1 {
-  font-size: var(--type-title);
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  color: var(--parchment);
-  line-height: 1.1;
-}
-
-.subtitle {
-  color: var(--ash);
-  font-style: italic;
-  font-size: var(--type-body);
-  margin-top: 0.3rem;
-  animation: breathe 8s ease-in-out infinite;
-}
-
-
-/* --- date line --- */
-
-.date-line {
-  color: var(--ash);
-  font-size: var(--type-body);
-  font-style: italic;
-  letter-spacing: 0.02em;
-  margin-bottom: 1.5rem;
-}
-
-
-/* ===== FLOW SECTIONS ===== */
-/* consistent spacing and typography throughout */
-
-.flow {
-  margin-bottom: 2.5rem;
-  transition: opacity 0.4s ease;
-}
-
-
-/* --- season --- */
-
-.season-name {
-  font-size: var(--type-season);
-  font-weight: 400;
-  color: var(--sprout);
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-  transition: color 2s ease;
-}
-
-.season-note {
-  color: var(--ash);
-  font-style: italic;
-  font-size: var(--type-body);
-  line-height: 1.8;
-  margin-top: 0.6rem;
-}
-
-.season-note p {
-  margin: 0;
-}
-
-
-/* --- sky (weather + celestial + moon tip) --- */
-
-.flow-sky p {
-  font-size: var(--type-body);
-  line-height: 1.9;
-}
-
-.weather-mood-text {
-  color: var(--ash);
-  font-style: italic;
-  margin-bottom: 1rem;
-}
-
-.sky-data {
-  color: var(--bone);
-}
-
-
-/* --- haiku --- */
-
-.flow-haiku {
-  text-align: center;
-}
-
-.flow-haiku blockquote {
-  display: inline-block;
-  text-align: left;
-  color: var(--ash);
-  font-style: italic;
-  font-size: var(--type-body);
-  line-height: 2.2;
-  letter-spacing: 0.02em;
-}
-
-.flow-haiku .haiku-line {
-  display: block;
-  white-space: nowrap;
-}
-
-.flow-haiku .haiku-line:nth-child(2) {
-  padding-left: 1.2rem;
-}
-
-.flow-haiku .haiku-line:nth-child(3) {
-  padding-left: 2.4rem;
-}
-
-
-/* --- wisdom (merged into narrative) --- */
-
-.wisdom {
-  display: none;
-}
-
-
-/* ===== NARRATIVE (curated items) ===== */
-
-.flow-entries {
-  transition: opacity 0.4s ease;
-}
-
-.narrative {
-  color: var(--bone);
-  font-size: var(--type-body);
-  line-height: 2;
-  margin-bottom: 1.5rem;
-}
-
-.narrative:last-child {
-  margin-bottom: 0;
-}
-
-.sep {
-  color: var(--ember);
-  opacity: 0.4;
-  margin: 0 0.5em;
-  font-style: normal;
-}
-
-
-/* --- bold highlights for scanning --- */
-
-.readout strong {
-  color: var(--parchment);
-  font-weight: 600;
-}
-
-
-/* ===== NAV DRAWER ===== */
-
-.nav-drawer {
-  margin-top: 2.5rem;
-}
-
-.nav-toggle {
-  display: inline-block;
-  color: var(--ash);
-  font-size: 0.75rem;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  opacity: 0.4;
-  cursor: pointer;
-  padding: 0.6rem 0;
-  min-height: 44px;
-  line-height: 44px;
-  transition: opacity 0.6s ease, color 0.6s ease;
-}
-
-.nav-toggle:hover {
-  opacity: 0.7;
-  color: var(--bone);
-}
-
-.nav-drawer-content {
-  display: none;
-}
-
-.nav-drawer.open .nav-drawer-content {
-  display: block;
-}
-
-
-/* ===== NAV STRIPS ===== */
-
-.nav-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.5rem;
-  margin-top: 1rem;
-  opacity: 0.5;
-  transition: opacity 0.6s ease;
-}
-
-.nav-strip:hover,
-.nav-strip:focus-within {
-  opacity: 0.8;
-}
-
-.nav-strip a {
-  color: var(--ash);
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  padding: 0.15rem 0;
-  transition: color 0.6s ease;
-  cursor: pointer;
-  opacity: 0;
-  animation: word-in 0.4s ease-out forwards;
-}
-
-.nav-strip a:hover {
-  color: var(--bone);
-}
-
-.nav-strip a.active {
-  color: var(--sprout);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-skip-ink: auto;
-}
-
-.nav-strip a.active::after {
-  text-decoration: none;
-  display: inline-block;
-}
-
-.nav-strip a:focus-visible {
-  outline: 1px solid var(--ember);
-  outline-offset: 2px;
-}
-
-.nav-strip a.return-now {
-  color: var(--ember);
-  flex-basis: 100%;
-}
-
-.nav-strip a::after {
-  content: '\00b7';
-  color: var(--ash);
-  margin-left: 0.4rem;
-  opacity: 0.4;
-}
-
-.nav-strip a:last-child::after,
-.nav-strip a.return-now::after {
-  content: '';
-}
-
-.times-nav {
-  justify-content: flex-start;
-}
-
-.times-nav a.return-now {
-  text-align: left;
-  margin-top: 0.3rem;
-}
-
-
-/* ===== FOOTER ===== */
-
-footer {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
-  text-align: center;
-  border-top: 1px solid var(--bark);
-  transition: opacity 0.4s ease, background-color 2s ease;
-}
-
-footer p {
-  color: var(--ash);
-  font-size: 0.8rem;
-  font-style: italic;
-  letter-spacing: 0.03em;
-}
-
-footer .credit {
-  margin-top: 1rem;
-  font-size: 0.7rem;
-  opacity: 0.4;
-  transition: opacity 0.6s ease;
-}
-
-footer .credit:hover {
-  opacity: 0.7;
-}
-
-footer .credit a {
-  color: var(--bone);
-  text-decoration: none;
-  border-bottom: 1px solid var(--bark);
-  transition: color 0.6s ease, border-color 0.6s ease;
-}
-
-footer .credit a:hover {
-  color: var(--parchment);
-  border-color: var(--ash);
-}
-
-
-/* ===== SHARED ===== */
-
-.word {
-  opacity: 0;
-  display: inline-block;
-  animation: word-in 0.3s ease-out forwards;
-}
-
-
-/* ===== LAYERS ===== */
-
-#sky-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 9998;
-  transition: background 4s ease;
-}
-
-#time-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100vh;
-  height: 100dvh;
-  pointer-events: none;
-  z-index: 9999;
-  transition: background 4s ease;
+  z-index: 1;
 }
 
 ::selection {
@@ -402,50 +111,585 @@ footer .credit a:hover {
 }
 
 
-/* ===== ANIMATIONS ===== */
+/* ===== ATMOSPHERIC LAYERS =======================================
+ * three fixed layers stacked behind the content:
+ *   - sky-layer: season radial tint (set by JS)
+ *   - time-layer: time-of-day vertical light (set by JS)
+ *   - grain: SVG noise texture for paper-by-firelight feel
+ * ================================================================ */
+
+#sky-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  transition: background 4s ease;
+}
+
+#time-layer {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  pointer-events: none;
+  z-index: -1;
+  transition: background 4s ease;
+}
+
+/* svg-noise grain. heavier than typical (~13%) because this needs
+   to read as paper texture and firelight haze, not just polish.
+   layered with mix-blend-mode overlay so it darkens shadows and
+   warms highlights at the same time. */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.07;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch' seed='4'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.72  0 0 0 0 0.55  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* slow breathing warm glow. anchored above center, drifts alpha
+   over 28s so the page pulses like a coal that won't quite go out.
+   sits behind the season radial so it tints rather than dominates. */
+.glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -3;
+  background: radial-gradient(ellipse 60% 50% at 50% 32%,
+    rgba(212, 165, 116, 0.12) 0%,
+    rgba(180, 120, 60, 0.04) 30%,
+    transparent 65%);
+  animation: ember-breathe 28s ease-in-out infinite;
+}
+
+@keyframes ember-breathe {
+  0%, 100% { opacity: 0.4; transform: translateY(0) scale(1); }
+  50%      { opacity: 0.8; transform: translateY(-10px) scale(1.03); }
+}
+
+
+/* ===== READOUT (the page column) ================================ */
+
+.readout {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3.5rem 1.6rem 2rem;
+}
+
+
+/* ===== MASTHEAD (almanac coordinate strip) ======================
+ * a tiny mono ribbon at the top: year roman, zone, latitude. like
+ * a ship's log header. justified across the column.
+ * ================================================================ */
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: var(--type-meta);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--ash);
+  text-transform: uppercase;
+  padding-bottom: 0.9rem;
+  margin-bottom: 3rem;
+  border-bottom: var(--rule);
+  opacity: 0.7;
+}
+
+.masthead-mark:nth-child(2) {
+  /* center mark gets a subtle ember tone */
+  color: var(--ember);
+  opacity: 0.85;
+}
+
+
+/* ===== TITLE BLOCK ============================================== */
+
+.title-block {
+  margin-bottom: 3.5rem;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 320, 'WONK' 1;
+  font-style: normal;
+  font-weight: 400;
+  font-size: var(--type-wordmark);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--parchment);
+  margin-bottom: 0.4rem;
+}
+
+.wordmark-sub {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 80, 'wght' 320;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--ash);
+  letter-spacing: 0.01em;
+  animation: breathe 9s ease-in-out infinite;
+}
+
+
+/* ===== DATE LINE (poetic) ======================================= */
+
+.date-line {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 60, 'wght' 320;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ash);
+  margin-bottom: 2rem;
+  padding-left: 0.05em;
+}
+
+
+/* ===== SEASON BLOCK ============================================= */
+
+.season-block {
+  margin-bottom: 3.5rem;
+}
+
+.season-name {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 144, 'SOFT' 80, 'wght' 280;
+  font-weight: 300;
+  font-size: var(--type-season);
+  line-height: 1.0;
+  letter-spacing: -0.015em;
+  color: var(--ember);
+  margin-bottom: 1.4rem;
+  transition: color 2s ease;
+}
+
+.season-note {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 18, 'SOFT' 70, 'wght' 380;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--bone);
+  max-width: 30rem;
+}
+
+.season-note p {
+  margin-bottom: 0.6rem;
+}
+
+.season-note p:last-child {
+  margin-bottom: 0;
+}
+
+/* drop cap on the very first letter — illuminated almanac feel */
+.season-note > p:first-child::first-letter {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 320;
+  font-style: italic;
+  font-size: 3.6em;
+  line-height: 0.85;
+  float: left;
+  padding: 0.18em 0.18em 0 0;
+  margin-right: 0.04em;
+  color: var(--ember);
+}
+
+
+/* ===== HAIKU ==================================================== */
+
+.haiku-block {
+  margin: 0 auto 4rem;
+  text-align: center;
+  padding: 1.5rem 0;
+  position: relative;
+}
+
+.haiku-block::before,
+.haiku-block::after {
+  content: '❦';
+  display: block;
+  text-align: center;
+  color: var(--ember);
+  opacity: 0.35;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.haiku-block::before { margin-bottom: 1.4rem; }
+.haiku-block::after  { margin-top: 1.4rem; }
+
+.haiku-block blockquote {
+  display: inline-block;
+  text-align: left;
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 24, 'SOFT' 90, 'wght' 320;
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 2.1;
+  color: var(--parchment);
+  letter-spacing: 0.01em;
+}
+
+.haiku-block .haiku-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.haiku-block .haiku-line:nth-child(2) { padding-left: 1.4rem; }
+.haiku-block .haiku-line:nth-child(3) { padding-left: 2.8rem; }
+
+
+/* ===== BUCKETS (sections) =======================================
+ * each section: roman numeral counter, small-caps mono label, then
+ * the content. hairline separator above each (instead of below the
+ * heading) so the rule reads as a chapter break.
+ * ================================================================ */
+
+.sections {
+  margin-top: 1rem;
+}
+
+.bucket {
+  position: relative;
+  padding-top: 5rem;
+  margin-bottom: 4.5rem;
+  transition: opacity 0.4s ease;
+}
+
+/* the section glyph: a single ornamental character centered above
+   the section, varied per section so the page reads as a sequence
+   of small ceremonies rather than a stack of cards. all from the
+   Dingbats block so they render reliably in any font; system
+   symbol fonts fall back to cover anything Fraunces lacks. */
+.bucket::before {
+  display: block;
+  text-align: center;
+  font-family: 'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2',
+               'Noto Sans Symbols', var(--serif);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--ember);
+  opacity: 0.65;
+  margin-bottom: 3.4rem;
+  letter-spacing: 0;
+  transition: color 1.4s ease, opacity 1.4s ease;
+}
+
+/* assign a glyph per section, all from U+2700-U+27BF Dingbats so
+   they universally render as monochrome glyphs (never emoji). */
+.bucket-sky::before      { content: '✶'; }   /* six-pointed star — celestial */
+.bucket-garden::before   { content: '❀'; }   /* white florette — flower */
+.bucket-kitchen::before  { content: '❦'; }   /* floral heart — hearth */
+.bucket-foraging::before { content: '✿'; }   /* black florette — wild plant */
+.bucket-folklore::before { content: '✦'; }   /* four-pointed star — story */
+
+.bucket:last-child {
+  margin-bottom: 2rem;
+}
+
+.bucket h2 {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: var(--type-meta);
+  letter-spacing: 0.36em;
+  text-transform: lowercase;
+  color: var(--ash);
+  margin-bottom: 2rem;
+  text-align: center;
+  transition: color 0.4s ease;
+}
+
+.bucket h2:hover {
+  color: var(--parchment);
+}
+
+
+/* --- intro line (italic mood for the SKY section) --- */
+
+.bucket-intro {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 18, 'SOFT' 70, 'wght' 360;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ash);
+  margin-bottom: 1.4rem;
+  max-width: 30rem;
+}
+
+
+/* --- group sub-labels ("in the ground now", "tonight", etc) --- */
+
+.bucket-label {
+  font-family: var(--mono);
+  font-size: var(--type-meta);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ember-warm);
+  margin-top: 1.6rem;
+  margin-bottom: 0.7rem;
+  opacity: 0.75;
+}
+
+.bucket-label:first-child,
+.bucket .bucket-intro + .bucket-label {
+  margin-top: 0;
+}
+
+
+/* --- bullet lists --- */
+
+.bucket-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.4rem 0;
+}
+
+.bucket-list li {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 50, 'wght' 380;
+  font-size: var(--type-body);
+  line-height: 1.65;
+  color: var(--bone);
+  padding: 0.18rem 0 0.18rem 1.5rem;
+  position: relative;
+}
+
+.bucket-list li::before {
+  content: '·';
+  position: absolute;
+  left: 0.4rem;
+  top: 0.18rem;
+  color: var(--ember);
+  opacity: 0.55;
+  font-size: 1.2em;
+  line-height: 1.4;
+}
+
+
+/* --- sky data lines (mono, no bullets — the data IS the point) --- */
+
+.bucket-sky .bucket-list {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  line-height: 1.95;
+  letter-spacing: 0.02em;
+  margin: 0.4rem 0 1rem;
+  padding: 0.8rem 1.1rem;
+  background: rgba(140, 100, 50, 0.04);
+  border-left: 2px solid var(--ember);
+}
+
+.bucket-sky .bucket-list li {
+  font-family: var(--mono);
+  padding: 0;
+  color: var(--bone);
+}
+
+.bucket-sky .bucket-list li::before { content: ''; }
+
+.bucket-sky .bucket-list li strong {
+  color: var(--ember);
+  font-weight: 500;
+}
+
+
+/* --- lore paragraphs (italic prose under each section) --- */
+
+.bucket-lore {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 18, 'SOFT' 70, 'wght' 380;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ash);
+  margin-top: 1.2rem;
+  max-width: 32rem;
+}
+
+.bucket-lore:first-of-type {
+  margin-top: 1.4rem;
+}
+
+
+/* ===== STRONG / EMPHASIS ======================================== */
+
+.readout strong {
+  font-variation-settings: 'opsz' 14, 'SOFT' 50, 'wght' 540;
+  color: var(--parchment);
+  font-weight: 540;
+}
+
+.bucket-lore strong {
+  font-style: italic;
+  color: var(--ember);
+}
+
+
+/* ===== FOOTER =================================================== */
+
+footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3rem 1.6rem 4rem;
+  text-align: center;
+  border-top: var(--rule);
+  transition: opacity 0.4s ease, background-color 2s ease;
+}
+
+.footer-status {
+  font-family: var(--mono);
+  font-size: var(--type-meta);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash);
+  opacity: 0.75;
+}
+
+.seasons-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.1rem;
+  margin-top: 1.6rem;
+  opacity: 0.55;
+  transition: opacity 0.6s ease;
+}
+
+.seasons-nav:hover,
+.seasons-nav:focus-within {
+  opacity: 0.9;
+}
+
+.seasons-nav a {
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 70, 'wght' 380;
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--ash);
+  text-decoration: none;
+  cursor: pointer;
+  letter-spacing: 0.005em;
+  transition: color 0.4s ease, font-variation-settings 0.4s ease;
+  position: relative;
+}
+
+.seasons-nav a:hover {
+  color: var(--bone);
+  font-variation-settings: 'opsz' 14, 'SOFT' 80, 'wght' 460;
+}
+
+.seasons-nav a.active {
+  color: var(--ember);
+  font-variation-settings: 'opsz' 14, 'SOFT' 80, 'wght' 460;
+}
+
+.seasons-nav a:focus-visible {
+  outline: 1px solid var(--ember);
+  outline-offset: 4px;
+}
+
+.credit {
+  margin-top: 2rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+  opacity: 0.45;
+  transition: opacity 0.6s ease;
+}
+
+.credit:hover { opacity: 0.85; }
+
+.credit a {
+  color: var(--bone);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(140, 110, 80, 0.25);
+  padding-bottom: 1px;
+  transition: color 0.4s ease, border-color 0.4s ease;
+}
+
+.credit a:hover {
+  color: var(--ember);
+  border-color: var(--ember);
+}
+
+
+/* ===== ANIMATIONS =============================================== */
+
+.word {
+  opacity: 0;
+  display: inline-block;
+  animation: word-in 0.4s ease-out forwards;
+}
+
+.bucket-list li {
+  opacity: 0;
+  animation: word-in 0.45s ease-out forwards;
+}
 
 @keyframes word-in {
-  from {
-    opacity: 0;
-    filter: blur(4px);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
-  }
+  from { opacity: 0; filter: blur(4px); transform: translateY(2px); }
+  to   { opacity: 1; filter: blur(0);   transform: translateY(0); }
 }
 
 @keyframes breathe {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-@keyframes sway {
-  0%, 100% { transform: translateX(0); }
-  30% { transform: translateX(2px); }
-  70% { transform: translateX(-1px); }
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE =============================================== */
 
-@media (max-width: 480px) {
-  html {
-    font-size: 16px;
+@media (max-width: 560px) {
+  html { font-size: 16px; }
+
+  .readout { padding: 2.2rem 1.2rem 1.5rem; }
+  footer   { padding: 2.4rem 1.2rem 3rem; }
+
+  .masthead {
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    margin-bottom: 2.2rem;
   }
 
-  .readout {
-    padding: 2.5rem 1.2rem 2rem;
+  .title-block { margin-bottom: 2.6rem; }
+  .season-block { margin-bottom: 2.6rem; }
+  .haiku-block { margin-bottom: 3rem; }
+
+  .bucket {
+    padding-top: 2.2rem;
+    margin-bottom: 2.6rem;
   }
 
-  footer {
-    padding: 2rem 1.2rem 3rem;
+  .bucket h2 {
+    letter-spacing: 0.28em;
   }
+
+  .bucket-sky .bucket-list {
+    font-size: 0.78rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .haiku-block .haiku-line:nth-child(2) { padding-left: 1rem; }
+  .haiku-block .haiku-line:nth-child(3) { padding-left: 2rem; }
 }

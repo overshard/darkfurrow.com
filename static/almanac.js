@@ -8,7 +8,6 @@
 
   var ANIM_WORD_DELAY = 18;
   var ANIM_LIST_DELAY = 60;
-  var ANIM_NAV_DELAY = 80;
 
 
   // --- daylight cycle ---
@@ -23,11 +22,6 @@
     { name: 'night',     start: 21, end: 24 }
   ];
 
-  var SEASONS_LIST = [
-    'winter', 'early-spring', 'late-spring', 'early-summer',
-    'midsummer', 'early-fall', 'late-fall'
-  ];
-
   function getTimeOfDay(date) {
     var h = date.getHours();
     for (var i = 0; i < TIMES.length; i++) {
@@ -36,7 +30,6 @@
     return 'night';
   }
 
-  // season detection for auto-refresh
   function getSeasonName(date) {
     var m = date.getMonth() + 1;
     var d = date.getDate();
@@ -59,29 +52,33 @@
     return 'winter';
   }
 
+  // palette per time of day. text stays in the bone/cream range so
+  // contrast holds; the ember "heading" role drives the accent (drop
+  // cap, roman numerals, links, mood markers) and stays warm-gold
+  // even at night so editorial elements don't disappear.
   var CYCLES = {
     night: {
-      bg: '#060504', text: '#9a8e80', accent: '#3a5030', heading: '#7a6a58',
+      bg: '#0a0806', text: '#dcd0b8', accent: '#86a07a', heading: '#d2a070',
       glow: 'rgba(30,25,20,0.08)', under1: 'rgba(15,12,10,0.8)',
       under2: 'rgba(20,18,15,0.6)', under3: 'rgba(10,10,15,0.5)'
     },
     dawn: {
-      bg: '#0f0c09', text: '#c4b5a0', accent: '#7a9a62', heading: '#c0885a',
+      bg: '#13100b', text: '#e0d4be', accent: '#92a880', heading: '#e3b27a',
       glow: 'rgba(180,120,60,0.06)', under1: 'rgba(40,25,15,0.6)',
       under2: 'rgba(50,30,18,0.4)', under3: 'rgba(30,20,12,0.5)'
     },
     morning: {
-      bg: '#0e0c0a', text: '#d4c8b8', accent: '#7a9a62', heading: '#b07a50',
+      bg: '#14100c', text: '#e2d8c2', accent: '#92a880', heading: '#d8aa78',
       glow: 'rgba(140,100,50,0.04)', under1: 'rgba(26,23,20,0.7)',
       under2: 'rgba(42,36,32,0.5)', under3: 'rgba(26,23,20,0.4)'
     },
     afternoon: {
-      bg: '#0d0b09', text: '#d0c2b0', accent: '#6a8a55', heading: '#a87048',
+      bg: '#15110e', text: '#dccfba', accent: '#88a07a', heading: '#d3a06c',
       glow: 'rgba(160,100,40,0.05)', under1: 'rgba(35,28,20,0.6)',
       under2: 'rgba(30,25,18,0.5)', under3: 'rgba(40,30,20,0.4)'
     },
     evening: {
-      bg: '#0b0908', text: '#c8b8a5', accent: '#5a7d4a', heading: '#b87840',
+      bg: '#120f0b', text: '#dac9b4', accent: '#82987a', heading: '#dfa478',
       glow: 'rgba(180,100,40,0.08)', under1: 'rgba(45,25,12,0.7)',
       under2: 'rgba(35,18,10,0.6)', under3: 'rgba(25,15,8,0.5)'
     }
@@ -143,7 +140,7 @@
 
   function revealWords(root) {
     if (!root) return;
-    var elements = root.querySelectorAll('h2, p, li, blockquote');
+    var elements = root.querySelectorAll('h1, h2, p, li, blockquote');
     var allItems = [];
 
     elements.forEach(function (el) {
@@ -190,10 +187,17 @@
       nodes.forEach(function (n) { el.appendChild(n); });
     });
 
-    var delay = 0;
+    // cap total cascade so the last item lands within ~1s of the
+    // first. budget includes both word and LI advances; with ~300
+    // items the per-item step shrinks below 5ms which still reads
+    // as a sweep rather than a pop.
+    var ANIM_TOTAL_MS = 900;
+    var n = allItems.length;
+    var step = n > 1 ? ANIM_TOTAL_MS / (n - 1) : 0;
+    var nextDelay = 0;
     allItems.forEach(function (item) {
-      item.style.animationDelay = delay + 'ms';
-      delay += item.tagName === 'LI' ? ANIM_LIST_DELAY : ANIM_WORD_DELAY;
+      item.style.animationDelay = nextDelay + 'ms';
+      nextDelay += step;
     });
   }
 
@@ -201,9 +205,7 @@
   // --- main ---
 
   var currentSeasonOverride = null;
-  var currentTimeOverride = null;
   var naturalSeason = null;
-  var naturalTime = null;
 
   var dom = {};
   function cacheDOM() {
@@ -211,40 +213,22 @@
     dom.seasonName = document.querySelector('.season-name');
     dom.seasonNote = document.querySelector('.season-note');
     dom.haikuBlock = document.querySelector('.flow-haiku blockquote');
-    dom.weatherMoodText = document.querySelector('.weather-mood-text');
-    dom.skyData = document.querySelector('.sky-data');
-    dom.footerP = document.querySelector('footer p');
-    dom.wisdom = document.querySelector('.wisdom');
-    dom.flowEntries = document.querySelector('.flow-entries');
+    dom.sections = document.querySelector('.sections');
+    dom.footerStatus = document.querySelector('.footer-status');
     dom.readout = document.querySelector('.readout');
     dom.footer = document.querySelector('footer');
     dom.seasonsNav = document.querySelector('.seasons-nav');
-    dom.timesNav = document.querySelector('.times-nav');
-    dom.navDrawer = document.querySelector('.nav-drawer');
-    dom.navToggle = document.querySelector('.nav-toggle');
-
-    if (dom.navToggle) {
-      dom.navToggle.addEventListener('click', function () {
-        var open = dom.navDrawer.classList.toggle('open');
-        dom.navToggle.textContent = open ? '...close' : '...explore';
-      });
-    }
   }
 
-  function loadContent(seasonOverride, timeOverride) {
-    var fadeTargets = ['.flow-season', '.flow-sky', '.flow-haiku', '.wisdom', '.flow-entries', 'footer'];
+  function loadContent(seasonOverride) {
+    var fadeTargets = ['.flow-season', '.flow-haiku', '.sections', 'footer'];
     fadeTargets.forEach(function (sel) {
       var el = document.querySelector(sel);
       if (el) el.style.opacity = '0';
     });
 
-    var params = [];
-    if (seasonOverride) params.push('season=' + encodeURIComponent(seasonOverride));
-    if (timeOverride) params.push('time=' + encodeURIComponent(timeOverride));
-    var url = '/api/content' + (params.length ? '?' + params.join('&') : '');
-
+    var url = '/api/content' + (seasonOverride ? '?season=' + encodeURIComponent(seasonOverride) : '');
     currentSeasonOverride = seasonOverride;
-    currentTimeOverride = timeOverride;
 
     fetch(url)
       .then(function (r) { return r.json(); })
@@ -253,20 +237,15 @@
         dom.seasonName.textContent = data.season_name;
         dom.seasonNote.innerHTML = data.season_note;
         dom.haikuBlock.innerHTML = data.haiku_html;
-        dom.weatherMoodText.innerHTML = data.weather_mood;
-        dom.skyData.innerHTML = data.sky_data;
-        dom.flowEntries.innerHTML = data.narrative_html;
-        dom.footerP.textContent = data.footer_text;
+        dom.sections.innerHTML = data.sections_html;
+        dom.footerStatus.textContent = data.footer_text;
         dom.seasonsNav.innerHTML = data.season_nav_html;
-        dom.timesNav.innerHTML = data.time_nav_html;
 
-        // update body attributes for the season color
         document.body.setAttribute('data-season', data.season_key);
         document.body.setAttribute('data-time', data.time_key);
 
-        // daylight cycle follows real clock, season follows content
-        var realTime = getTimeOfDay(new Date());
-        applyDaylightCycle(realTime, data.season_key);
+        // background cycle follows real clock; season tint follows content
+        applyDaylightCycle(getTimeOfDay(new Date()), data.season_key);
 
         fadeTargets.forEach(function (sel) {
           var el = document.querySelector(sel);
@@ -275,11 +254,10 @@
 
         revealWords(dom.readout);
         revealWords(dom.footer);
-
         bindNavClicks();
       })
       .catch(function () {
-        dom.flowEntries.innerHTML = '<p style="color:var(--ash);font-style:italic;">the pages could not be found. try again in a moment.</p>';
+        dom.sections.innerHTML = '<p style="color:var(--ash);font-style:italic;">the pages could not be found. try again in a moment.</p>';
         fadeTargets.forEach(function (sel) {
           var el = document.querySelector(sel);
           if (el) el.style.opacity = '1';
@@ -292,22 +270,7 @@
       a.addEventListener('click', function () {
         var season = a.getAttribute('data-season');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (season === naturalSeason) {
-          loadContent(null, currentTimeOverride);
-        } else {
-          loadContent(season, currentTimeOverride);
-        }
-      });
-    });
-
-    dom.timesNav.querySelectorAll('a[data-time]').forEach(function (a) {
-      a.addEventListener('click', function () {
-        var time = a.getAttribute('data-time');
-        if (time === 'now') {
-          loadContent(currentSeasonOverride, null);
-        } else {
-          loadContent(currentSeasonOverride, time);
-        }
+        loadContent(season === naturalSeason ? null : season);
       });
     });
   }
@@ -319,34 +282,27 @@
 
   var now = new Date();
   naturalSeason = getSeasonName(now);
-  naturalTime = getTimeOfDay(now);
 
-  // apply daylight cycle from server-provided attributes
   var initSeason = document.body.getAttribute('data-season') || naturalSeason;
-  var initTime = document.body.getAttribute('data-time') || naturalTime;
+  var initTime = document.body.getAttribute('data-time') || getTimeOfDay(now);
   applyDaylightCycle(initTime, initSeason);
 
-  // reveal the server-rendered content
   revealWords(dom.readout);
   revealWords(dom.footer);
-
-  // bind nav clicks on the server-rendered nav
   bindNavClicks();
 
-  // auto-refresh when time of day or season changes
+  // refresh on season rollover; keep palette in sync with the clock
   setInterval(function () {
     var check = new Date();
-    var newTime = getTimeOfDay(check);
     var newSeason = getSeasonName(check);
-    if (newTime !== naturalTime || newSeason !== naturalSeason) {
-      naturalTime = newTime;
+    if (newSeason !== naturalSeason) {
       naturalSeason = newSeason;
-      if (!currentTimeOverride) {
-        loadContent(currentSeasonOverride, null);
+      if (!currentSeasonOverride) {
+        loadContent(null);
+        return;
       }
-      // always update the daylight cycle to real time
-      applyDaylightCycle(newTime, document.body.getAttribute('data-season') || newSeason);
     }
+    applyDaylightCycle(getTimeOfDay(check), document.body.getAttribute('data-season') || newSeason);
   }, 60000);
 
   // register service worker for offline access
