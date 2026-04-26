@@ -21,7 +21,8 @@ DATA = load_data(DATA_DIR)
 @app.route('/')
 def index():
     now = datetime.now(ZoneInfo('America/New_York'))
-    content = assemble_content(now, DATA)
+    season_override = request.args.get('season')
+    content = assemble_content(now, DATA, season_override=season_override)
     return render_template('index.html', **content)
 
 
@@ -29,10 +30,5 @@ def index():
 def api_content():
     now = datetime.now(ZoneInfo('America/New_York'))
     season_override = request.args.get('season')
-    time_override = request.args.get('time')
-    content = assemble_content(
-        now, DATA,
-        season_override=season_override,
-        time_override=time_override,
-    )
+    content = assemble_content(now, DATA, season_override=season_override)
     return jsonify(content)
