@@ -660,6 +660,17 @@ def _section_kitchen(season, data, rng):
                 'label': 'tonight',
                 'items': [render_md(tonight)],
             })
+
+    parsed = _read_md(f"preserving/{season['name']}.md", files)
+    if parsed:
+        items = parse_list_items(parsed['body'])
+        if items['bullets']:
+            picks = pick_items(items['bullets'], min(2, len(items['bullets'])), rng)
+            groups.append({
+                'label': 'putting up',
+                'items': [render_md(p) for p in picks],
+            })
+
     return {'key': 'kitchen', 'title': 'kitchen', 'intro': '', 'groups': groups, 'lore': []}
 
 
