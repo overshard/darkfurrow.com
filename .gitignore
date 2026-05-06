@@ -1,5 +1,6 @@
 .env
-__pycache__/
-.venv/
+/target
+/dist
+/frontend/node_modules
 .playwright-mcp/
 *.png
