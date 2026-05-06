@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ----- builder -----
 FROM rust:alpine AS builder
 
@@ -12,14 +13,17 @@ COPY src ./src
 COPY frontend ./frontend
 
 RUN cd frontend && bun install --frozen-lockfile && bun run build
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release && \
+    cp target/release/darkfurrow /app/darkfurrow
 
 # ----- runtime -----
 FROM alpine:3.23
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/darkfurrow ./darkfurrow
+COPY --from=builder /app/darkfurrow ./darkfurrow
 COPY --from=builder /app/dist ./dist
 COPY templates ./templates
 COPY data ./data
