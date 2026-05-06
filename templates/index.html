@@ -31,8 +31,8 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
   <!-- typography is self-hosted from /static/fonts/ via @font-face in
-       style.css. no third-party font cdn calls at runtime. -->
-  <link rel="stylesheet" href="/static/style.css">
+       base.scss. no third-party font cdn calls at runtime. -->
+  <link rel="stylesheet" href="{{ vite_asset('index.js', 'css') }}">
 </head>
 <body data-time="{{ time_key }}" data-season="{{ season_key }}">
 
@@ -76,6 +76,6 @@
     </footer>
   </main>
 
-  <script src="/static/almanac.js"></script>
+  <script src="{{ vite_asset('index.js') }}"></script>
 </body>
 </html>
