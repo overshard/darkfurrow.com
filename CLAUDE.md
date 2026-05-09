@@ -1,4 +1,6 @@
-# Dark Furrow
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What is this project?
 
@@ -36,8 +38,8 @@ There are no linters configured.
 
 **Backend:** Single-binary axum app (`src/main.rs`). Two routes: `/` renders
 the page, `/api/content` returns the same content as JSON for the client-side
-auto-refresh. Both accept `?season=` for previewing other seasons. Data is
-loaded once at startup from `data/` and held in `AppState`.
+auto-refresh. Both accept `?season=` for previewing other seasons. Markdown is
+loaded once at startup from `content/` and held in `AppState`.
 
 **Frontend pipeline:** Vite (run from `frontend/`) builds `frontend/static_src/`
 into `dist/`. Entry point is `frontend/static_src/index.js` which imports SCSS
@@ -75,7 +77,7 @@ original python implementation in unit tests.
 
 **Section assembly:** `src/almanac.rs` is the engine. Builds five sections
 (sky, garden, kitchen, foraging, folklore), pulls bullets and prose from
-the relevant `data/<topic>/<season>.md` files, picks items via the seeded
+the relevant `content/<topic>/<season>.md` files, picks items via the seeded
 RNG, and renders to a single HTML string for the template + JSON API.
 
 **Request logging:** custom middleware in `src/main.rs::log_requests` prints
@@ -84,8 +86,8 @@ RNG, and renders to a single HTML string for the template + JSON API.
 per request. The `.layer()` is applied after all routes so it covers the
 `nest_service` static-file mount too.
 
-**Content:** `data/` holds markdown for every topic-season combination plus
-seasons, haiku, moods, and moon-tips. The `data/wisdom/` files exist on disk
+**Content:** `content/` holds markdown for every topic-season combination plus
+seasons, haiku, moods, and moon-tips. The `content/wisdom/` files exist on disk
 but are not read by anything (they were tied to the removed time rotation).
 
 ## Page structure
@@ -95,7 +97,7 @@ part they care about. The current sections, in order, are:
 
 1. **sky**  - calculated sun/moon/daylight + moon-phase gardening tip + a sky
    lore line + a storms lore line. The italic intro is the season's mood for
-   the current time of day (from `data/moods/`).
+   the current time of day (from `content/moods/`).
 2. **garden** - planting picks ("in the ground now"), indoor starts when the
    season has them, and a couple of weekly chores ("this week").
 3. **kitchen** - what's "in season" plus one "tonight" highlight.
@@ -128,13 +130,13 @@ darkfurrow.com/
 │       ├── styles/base.scss      # @font-face + the whole stylesheet
 │       └── public/               # copied as-is to dist/ (favicon, og, sw, fonts/)
 ├── templates/                    # minijinja-compatible jinja2
-├── data/                         # markdown content (one file per topic-season)
+├── content/                      # markdown (one file per topic-season)
 ├── dist/                         # vite build output (gitignored, served at /static/)
 ├── target/                       # cargo build output (gitignored)
 └── samplefiles/                  # Caddyfile.sample, env.sample, post-receive.sample
 ```
 
-The binary reads `templates/`, `dist/`, and `data/` from the current working
+The binary reads `templates/`, `dist/`, and `content/` from the current working
 directory by default. Override the project root with `DARKFURROW_ROOT=<path>`.
 
 ## Content the page should surface

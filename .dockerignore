@@ -1,5 +1,4 @@
-.env
 /target
-/dist
-/frontend/dist
 /frontend/node_modules
+/.git
+/dist

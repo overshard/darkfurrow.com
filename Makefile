@@ -19,7 +19,7 @@ build: frontend/node_modules
 start:
 	PORT=$(PORT) ./target/release/darkfurrow
 
-# `data/` holds the almanac content (tracked in git, copied into the image),
+# `content/` holds the almanac markdown (tracked in git, copied into the image),
 # so do NOT wipe it.
 clean:
 	rm -rf target dist frontend/node_modules

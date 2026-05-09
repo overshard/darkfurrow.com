@@ -12,7 +12,15 @@ mod templates;
 use std::net::SocketAddr;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv().ok();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     let port: u16 = std::env::var("PORT")
         .ok()
         .and_then(|v| v.parse().ok())
@@ -20,7 +28,8 @@ async fn main() {
 
     let app = app::router(app::AppState::from_env());
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    eprintln!("darkfurrow listening on http://{addr}");
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    tracing::info!("darkfurrow listening on http://{addr}");
+    axum::serve(listener, app).await?;
+    Ok(())
 }
