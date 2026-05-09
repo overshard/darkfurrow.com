@@ -62,9 +62,11 @@ strips a single wrapping `<p>...</p>` for inline contexts (matches Mistune's
 output for the original flask version); `render_block` keeps block tags.
 
 **Astronomical math:** `src/astro.rs`. Moon phase + illumination via Meeus's
-lunar series (table 47.A perturbations). Sunrise/sunset/daylight via NOAA's
-Spencer fourier series. Locked to zone 7a (lat 35.78, lon -78.64). Local-tz
-handling uses chrono-tz with America/New_York. Accurate to ~1 minute.
+lunar series (table 47.A perturbations). Sun position via Meeus chapter 25
+with one refinement pass at predicted event time; produces sunrise, sunset,
+civil/nautical/astronomical dusk (sun at -6/-12/-18°). Matches USNO to a few
+seconds. Locked to zone 7a (lat 35.78, lon -78.64). Local-tz handling uses
+chrono-tz with America/New_York.
 
 **Daily-stable seeded RNG:** `src/rng.rs` is a mulberry32 PRNG with
 JS-Math.imul-compatible semantics. Keyed by day-of-year so picks shift day
