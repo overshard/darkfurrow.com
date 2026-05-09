@@ -3,7 +3,9 @@ use chrono_tz::Tz;
 use serde::Serialize;
 
 use crate::astro::{moon_phase, sky_data_lines};
-use crate::content::{parse_frontmatter, parse_list_items, ListItems, MoonTip, Season, SiteData};
+use crate::content::{
+    parse_frontmatter, parse_list_items, parse_named_lists, ListItems, MoonTip, Season, SiteData,
+};
 use crate::markdown::{render_block, render_inline};
 use crate::rng::{day_hash, pick_items, Mulberry32};
 
@@ -129,6 +131,15 @@ fn read_md_parts<'a>(path: &str, files: &'a std::collections::HashMap<String, St
     Some(parse_list_items(&parsed.body))
 }
 
+fn read_named_lists(
+    path: &str,
+    files: &std::collections::HashMap<String, String>,
+) -> Option<Vec<(String, Vec<String>)>> {
+    let body = files.get(path)?;
+    let parsed = parse_frontmatter(body);
+    Some(parse_named_lists(&parsed.body))
+}
+
 #[derive(Debug)]
 struct Group {
     label: &'static str,
@@ -214,6 +225,30 @@ fn section_garden(season: &Season, data: &SiteData, rng: &mut Mulberry32) -> Sec
             let picks = pick_items(&items.bullets, n, rng);
             groups.push(Group {
                 label: "this week",
+                items: picks.iter().map(|s| render_inline(s)).collect(),
+            });
+        }
+    }
+
+    if let Some(named) = read_named_lists(&format!("companions/{}.md", season.name), &data.files) {
+        // Map "good"/"bad" headings in the markdown to the labels rendered on
+        // the page. Other headings in the file are ignored.
+        let label_for = |name: &str| -> Option<&'static str> {
+            match name {
+                "good" => Some("good neighbors"),
+                "bad" => Some("bad neighbors"),
+                _ => None,
+            }
+        };
+        for (name, items) in &named {
+            let Some(label) = label_for(name) else { continue };
+            if items.is_empty() {
+                continue;
+            }
+            let n = items.len().min(3);
+            let picks = pick_items(items, n, rng);
+            groups.push(Group {
+                label,
                 items: picks.iter().map(|s| render_inline(s)).collect(),
             });
         }
