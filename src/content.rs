@@ -75,6 +75,31 @@ pub fn parse_list_items(body: &str) -> ListItems {
     ListItems { bullets, prose }
 }
 
+/// Parse a body that contains multiple named bullet lists, each introduced by
+/// a `## name` heading. Order is preserved so callers can render sections in
+/// the same sequence the file declared them.
+pub fn parse_named_lists(body: &str) -> Vec<(String, Vec<String>)> {
+    let mut sections: Vec<(String, Vec<String>)> = Vec::new();
+    let mut current: Option<(String, Vec<String>)> = None;
+    for line in body.split('\n') {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("## ") {
+            if let Some(prev) = current.take() {
+                sections.push(prev);
+            }
+            current = Some((rest.trim().to_string(), Vec::new()));
+        } else if let Some(rest) = trimmed.strip_prefix("- ") {
+            if let Some((_, items)) = current.as_mut() {
+                items.push(rest.to_string());
+            }
+        }
+    }
+    if let Some(prev) = current.take() {
+        sections.push(prev);
+    }
+    sections
+}
+
 #[derive(Debug, Clone)]
 pub struct Season {
     pub name: String,
