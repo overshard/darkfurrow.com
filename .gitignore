@@ -2,5 +2,3 @@
 /target
 /dist
 /frontend/node_modules
-.playwright-mcp/
-*.png

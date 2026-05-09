@@ -19,9 +19,10 @@ build: frontend/node_modules
 start:
 	PORT=$(PORT) ./target/release/darkfurrow
 
+# `data/` holds the almanac content (tracked in git, copied into the image),
+# so do NOT wipe it.
 clean:
-	$(CARGO) clean
-	rm -rf dist frontend/node_modules
+	rm -rf target dist frontend/node_modules
 
 push:
 	git remote | xargs -I R git push R master
