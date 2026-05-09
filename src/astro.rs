@@ -1,10 +1,37 @@
+//! Astronomical math for the almanac. Self-contained, no external API calls.
+//!
+//! All formulas trace to Jean Meeus, *Astronomical Algorithms* (2nd ed.):
+//!   ch. 7  julian day
+//!   ch. 22 mean obliquity of the ecliptic
+//!   ch. 25 sun apparent position
+//!   ch. 28 equation of time
+//!   ch. 47 moon position and phase (table 47.A perturbation series, truncated)
+//!
+//! Conventions:
+//!   * Time variable `t` is always Julian centuries since J2000.0
+//!     (JD 2451545.0 = 2000-01-01 12:00 TT). One Julian century = 36525 days.
+//!     We treat UTC as TT; the offset is ~70 sec, well below render precision.
+//!   * Angle <-> time conversions: 1 deg of arc = 4 min of time, 15 deg = 1 hr
+//!     (earth rotates 360 deg per 24*60 min).
+//!   * Latitude is north-positive, longitude east-positive (Raleigh's lon is
+//!     therefore negative).
+
 use chrono::{DateTime, Datelike, Duration, TimeZone, Timelike, Utc};
 use chrono_tz::Tz;
 
+/// Latitude of Raleigh, NC (zone 7a target).
 const LAT: f64 = 35.78;
+/// Longitude of Raleigh, NC. East-positive, so this is negative.
 const LON: f64 = -78.64;
+/// Reference epoch for every "centuries since" calculation.
+const J2000_JD: f64 = 2451545.0;
+/// Days in one Julian century (the unit of `t` everywhere below).
+const JULIAN_CENTURY: f64 = 36525.0;
+/// Mean length of the lunar synodic month (new moon to new moon), in days.
 const SYNODIC_MONTH: f64 = 29.53058867;
 
+/// Julian Day for a UTC instant. Meeus formula 7.1, Gregorian calendar only
+/// (fine for any modern date). Constants explained inline below.
 fn julian_day(dt_utc: DateTime<Utc>) -> f64 {
     let mut y = dt_utc.year();
     let mut m = dt_utc.month() as i32;
@@ -12,12 +39,21 @@ fn julian_day(dt_utc: DateTime<Utc>) -> f64 {
         + (dt_utc.hour() as f64
             + (dt_utc.minute() as f64 + dt_utc.second() as f64 / 60.0) / 60.0)
             / 24.0;
+    // Meeus's calendar trick: Jan/Feb are treated as months 13/14 of the
+    // previous year so a single polynomial covers the whole shifted year.
     if m <= 2 {
         y -= 1;
         m += 12;
     }
+    // `b` is the Gregorian leap-day correction (number of "missing" leap days
+    // in the Gregorian rules vs. the pure Julian 365.25 average).
     let a = (y as f64 / 100.0).floor() as i32;
     let b = 2 - a + (a as f64 / 4.0).floor() as i32;
+    // 365.25  = avg days/year (Julian)
+    // 30.6001 = avg days/month over the shifted Mar->Feb calendar
+    // 4716    = year offset that keeps the result non-negative for all dates
+    // -1524.5 = anchors JD 0 to noon on -4712 Jan 1 (Julian proleptic), the
+    //           astronomical zero point.
     (365.25 * (y as f64 + 4716.0)).floor()
         + (30.6001 * (m as f64 + 1.0)).floor()
         + d
@@ -25,10 +61,18 @@ fn julian_day(dt_utc: DateTime<Utc>) -> f64 {
         - 1524.5
 }
 
-/// (age in days, illumination 0..1)
+/// (age in days through the synodic month, illumination 0..1).
+/// Truncated form of Meeus chapter 47 with the table 47.A perturbation series.
 fn moon_state(date: DateTime<Tz>) -> (f64, f64) {
     let dt_utc = date.with_timezone(&Utc);
-    let t = (julian_day(dt_utc) - 2451545.0) / 36525.0;
+    let t = (julian_day(dt_utc) - J2000_JD) / JULIAN_CENTURY;
+    // Meeus 47.2 - 47.5: the four fundamental angles of the lunar problem
+    // (all degrees). Each polynomial is "value at J2000.0 + linear drift per
+    // Julian century"; higher-order terms are below our render precision.
+    //   d  = mean elongation of moon from sun
+    //   ms = sun's mean anomaly
+    //   mm = moon's mean anomaly
+    //   f  = argument of latitude (moon's distance from ascending node)
     let d = (297.8501921_f64 + 445267.1114034 * t).rem_euclid(360.0);
     let ms = (357.5291092_f64 + 35999.0502909 * t).rem_euclid(360.0);
     let mm = (134.9633964_f64 + 477198.8675055 * t).rem_euclid(360.0);
@@ -37,6 +81,10 @@ fn moon_state(date: DateTime<Tz>) -> (f64, f64) {
     let msr = ms.to_radians();
     let mmr = mm.to_radians();
     let fr = f.to_radians();
+    // Meeus table 47.A: longitude perturbations of the moon (degrees). First
+    // 13 terms are above the arcminute level; the rest of the table is too
+    // small to matter for percent-illumination output. Coefficients come from
+    // the table as-published.
     let dl_moon = 6.288774 * mmr.sin()
         + 1.274027 * (2.0 * dr - mmr).sin()
         + 0.658314 * (2.0 * dr).sin()
@@ -50,11 +98,15 @@ fn moon_state(date: DateTime<Tz>) -> (f64, f64) {
         - 0.040923 * (msr - mmr).sin()
         - 0.034720 * dr.sin()
         - 0.030383 * (msr + mmr).sin();
+    // Sun's longitude correction (the equation of centre, kept to 3 terms).
     let dl_sun = 1.914602 * msr.sin()
         + 0.019993 * (2.0 * msr).sin()
         + 0.000289 * (3.0 * msr).sin();
+    // Elongation: how far around the cycle the moon is from the sun (degrees).
     let elong = (d + dl_moon - dl_sun).rem_euclid(360.0);
+    // Map elongation linearly onto days through the mean synodic month.
     let age = elong / 360.0 * SYNODIC_MONTH;
+    // Half-angle identity: fraction of disk illuminated, exact for a sphere.
     let illum = (1.0 - elong.to_radians().cos()) / 2.0;
     (age, illum)
 }
@@ -67,6 +119,11 @@ pub fn moon_illumination(date: DateTime<Tz>) -> f64 {
     moon_state(date).1
 }
 
+/// Name for a given lunar age in days. The four "moment" phases (new, first
+/// quarter, full, last quarter) get a thin ~1.85-day window around the exact
+/// moment (0.92 days each side); the four crescent/gibbous phases fill the
+/// rest. Boundaries are placed so the cycle divides into eight pieces with
+/// the moments centred on 0, 7.38 (cycle/4), 14.77 (cycle/2), 22.15 (3*cycle/4).
 pub fn moon_name(phase: f64) -> &'static str {
     if phase < 1.85 {
         "new moon"
@@ -89,8 +146,11 @@ pub fn moon_name(phase: f64) -> &'static str {
     }
 }
 
-// standard sun-event altitudes (degrees below horizon).
-// -0.8333 = atmospheric refraction (-34') + sun semi-diameter (-16').
+// Standard sun-event altitudes, in degrees of the sun's centre below the
+// horizon. Sunrise/sunset uses -0.8333 deg = -50' total, which is the sum of
+// average atmospheric refraction at the horizon (~34') and the sun's apparent
+// semi-diameter (~16'); the upper limb appears tangent to the horizon at this
+// geometric altitude. Twilight thresholds are the usual conventions.
 const SUN_GEOMETRIC_ALT: f64 = -0.8333;
 const CIVIL_DUSK_ALT: f64 = -6.0;
 const NAUTICAL_DUSK_ALT: f64 = -12.0;
@@ -106,27 +166,51 @@ pub struct SunTimes {
     pub daylight_hours: f64,
 }
 
-/// (right ascension deg, declination rad, equation of time min). Meeus ch 25.
+/// Apparent geocentric position of the sun, plus equation of time.
+/// Returns (right ascension deg, declination rad, equation of time minutes).
+/// Implements Meeus chapter 25 with low-accuracy nutation (chapter 22 / 25.8).
 fn sun_apparent(jde: f64) -> (f64, f64, f64) {
-    let t = (jde - 2451545.0) / 36525.0;
+    // `t` = Julian centuries since J2000.0, the unit every polynomial below
+    // expects. All polynomial coefficients come straight from Meeus.
+    let t = (jde - J2000_JD) / JULIAN_CENTURY;
+    // 25.2: sun's mean longitude L0 (deg). Linear term ~36000 deg/century =
+    // one full cycle/year. Quadratic term is tiny secular drift.
     let l0 = (280.46646 + 36000.76983 * t + 0.0003032 * t * t).rem_euclid(360.0);
+    // 25.3: sun's mean anomaly M (deg). Same order of magnitude as L0; differs
+    // because mean longitude tracks "where the sun would be on a circle" while
+    // anomaly tracks position relative to perihelion.
     let m = (357.52911 + 35999.05029 * t - 0.0001537 * t * t).rem_euclid(360.0);
     let mr = m.to_radians();
+    // Meeus 25, "equation of the centre" series. Three-term truncation gives
+    // sub-arcsecond accuracy. Result is a correction to L0 to get the sun's
+    // true (geometric) longitude.
     let c = (1.914602 - 0.004817 * t - 0.000014 * t * t) * mr.sin()
         + (0.019993 - 0.000101 * t) * (2.0 * mr).sin()
         + 0.000289 * (3.0 * mr).sin();
     let true_long = l0 + c;
+    // Omega = longitude of ascending node of the moon's mean orbit (deg).
+    // Required by the low-accuracy nutation corrections in 25.8 and 22.
     let omega_r = (125.04 - 1934.136 * t).to_radians();
+    // 25.8: apparent longitude (corrects for aberration -0.00569 and the dominant
+    // nutation term -0.00478*sin(Omega), both in degrees).
     let lambda = true_long - 0.00569 - 0.00478 * omega_r.sin();
+    // 22.2: mean obliquity of the ecliptic (deg). Constant term =
+    // 23 deg 26' 21.448" = 23.439291 deg; secular terms ~0.013 deg/century.
     let eps0 = 23.439291 - 0.0130042 * t - 1.64e-7 * t * t + 5.04e-7 * t * t * t;
+    // Apparent obliquity = mean + dominant nutation term in obliquity.
     let eps = eps0 + 0.00256 * omega_r.cos();
     let lr = lambda.to_radians();
     let er = eps.to_radians();
+    // 25.6 / 25.7: rotate ecliptic (lambda, beta=0) into equatorial coordinates.
     let alpha = (er.cos() * lr.sin())
         .atan2(lr.cos())
         .to_degrees()
         .rem_euclid(360.0);
     let decl = (er.sin() * lr.sin()).asin();
+    // 28.1 (simplified): equation of time = L0 - aberration - alpha (deg),
+    // wrapped into (-180, 180], then 4 min per degree gives minutes of time.
+    // The 0.0057183 deg = 20.4965" is the standard aberration constant for
+    // light's annual deflection.
     let mut diff = (l0 - 0.0057183 - alpha) % 360.0;
     if diff > 180.0 {
         diff -= 360.0;
@@ -137,6 +221,11 @@ fn sun_apparent(jde: f64) -> (f64, f64, f64) {
     (alpha, decl, 4.0 * diff)
 }
 
+/// Half-day length, in hours: how long before/after solar noon the sun is at
+/// altitude `alt_rad` for declination `decl`. Returns None if the sun never
+/// reaches that altitude on this day (polar day or polar night). Standard
+/// "sunrise equation": cos(H) = (sin(h) - sin(phi)*sin(delta)) / (cos(phi)*cos(delta)).
+/// Convert from degrees to hours by dividing by 15 (earth turns 15 deg/hr).
 fn hour_angle_at_alt(decl: f64, alt_rad: f64) -> Option<f64> {
     let lat_r = LAT.to_radians();
     let cos_h = (alt_rad.sin() - lat_r.sin() * decl.sin()) / (lat_r.cos() * decl.cos());
@@ -148,7 +237,10 @@ fn hour_angle_at_alt(decl: f64, alt_rad: f64) -> Option<f64> {
 
 /// Local-tz fractional hour of the rise (`is_rise=true`) or set event when the
 /// sun is at altitude `alt_deg`. Returns `None` if the sun never crosses that
-/// altitude on the given date (no event, e.g. polar day/night).
+/// altitude on the given date (polar day/night). Two-pass algorithm: first
+/// solve using the sun's position at noon UTC, then re-solve at the predicted
+/// event time so the answer accounts for declination drift across the day.
+/// One refinement is enough for sub-second accuracy at temperate latitudes.
 fn sun_event_hours(
     jd_noon: f64,
     utc_midnight: DateTime<Utc>,
@@ -157,16 +249,28 @@ fn sun_event_hours(
     is_rise: bool,
 ) -> Option<f64> {
     let alt_r = alt_deg.to_radians();
-    // first pass uses noon-UTC sun position
+
+    // Pass 1: estimate event using sun position at local noon.
     let (_, decl0, eot0) = sun_apparent(jd_noon);
     let h0 = hour_angle_at_alt(decl0, alt_r)?;
+    // Apparent solar noon (UTC, fractional hours):
+    //   12.0    = noon UTC at the prime meridian, ignoring everything else
+    //   -LON/15 = longitude correction (15 deg = 1 hr; west is negative LON,
+    //             so this term shifts solar noon later in UTC)
+    //   -eot/60 = equation of time, converted from minutes to hours; this is
+    //             how far apparent (sundial) noon is from mean (clock) noon
     let solar_noon_0 = 12.0 - LON / 15.0 - eot0 / 60.0;
     let evt0 = if is_rise { solar_noon_0 - h0 } else { solar_noon_0 + h0 };
-    // refine once at the predicted event time
+
+    // Pass 2: recompute sun position at the predicted event time. `jd_noon`
+    // is at 12:00 UTC, so `jd_noon - 0.5` is 00:00 UTC the same date; adding
+    // `evt0 / 24` of a day lands at the event itself.
     let (_, decl1, eot1) = sun_apparent(jd_noon - 0.5 + evt0 / 24.0);
     let h1 = hour_angle_at_alt(decl1, alt_r)?;
     let solar_noon_1 = 12.0 - LON / 15.0 - eot1 / 60.0;
     let evt1 = if is_rise { solar_noon_1 - h1 } else { solar_noon_1 + h1 };
+
+    // Convert UTC fractional hours back to a local-tz fractional hour.
     let event_utc = utc_midnight + Duration::nanoseconds((evt1 * 3600.0 * 1e9) as i64);
     let local = event_utc.with_timezone(&tz);
     Some(local.hour() as f64 + local.minute() as f64 / 60.0 + local.second() as f64 / 3600.0)
