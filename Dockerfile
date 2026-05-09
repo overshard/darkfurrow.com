@@ -26,7 +26,7 @@ WORKDIR /app
 COPY --from=builder /app/darkfurrow ./darkfurrow
 COPY --from=builder /app/dist ./dist
 COPY templates ./templates
-COPY data ./data
+COPY content ./content
 
 RUN addgroup -S -g 1000 app && \
     adduser -S -h /app -s /sbin/nologin -u 1000 -G app app && \

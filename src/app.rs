@@ -25,11 +25,11 @@ impl AppState {
 
         let templates_dir = project_root.join("templates");
         let dist_dir = project_root.join("dist");
-        let data_dir = project_root.join("data");
+        let content_dir = project_root.join("content");
         let manifest_path = dist_dir.join(".vite/manifest.json");
 
         let env = templates::build_env(&templates_dir, &manifest_path);
-        let data = content::load_data(&data_dir).expect("failed to load data");
+        let data = content::load_data(&content_dir).expect("failed to load data");
 
         Self {
             env: Arc::new(env),
