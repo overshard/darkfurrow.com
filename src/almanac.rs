@@ -1,11 +1,13 @@
 use chrono::{DateTime, Datelike, NaiveDate, Timelike};
 use chrono_tz::Tz;
+use serde::Serialize;
 
 use crate::astro::{moon_phase, sky_data_lines};
 use crate::content::{parse_frontmatter, parse_list_items, ListItems, MoonTip, Season, SiteData};
 use crate::markdown::{render_block, render_inline};
 use crate::rng::{day_hash, pick_items, Mulberry32};
 
+#[derive(Serialize)]
 pub struct Assembled {
     pub date_line: String,
     pub season_name: String,
