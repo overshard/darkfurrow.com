@@ -171,9 +171,8 @@ directory by default. Override the project root with `DARKFURROW_ROOT=<path>`.
 - Playwright MCP is available for browser testing. Use it to take
   screenshots and verify visual changes after modifying styles,
   templates, or content. Start the dev server first with `make run`.
-- Clean up screenshot files (*.png) after reviewing them. Delete them
-  once you have confirmed the result to avoid clutter in the project
-  directory.
+- Save screenshots to `/tmp` (not the project directory), and delete
+  them after reviewing.
 - The dev environment runs inside a Docker container with port 8000
   mapped to the host.
 
