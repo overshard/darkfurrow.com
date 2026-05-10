@@ -1,6 +1,6 @@
 services:
   web:
-    container_name: darkfurrow.com
+    container_name: darkfurrow
     build: .
     init: true
     restart: unless-stopped
