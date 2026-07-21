@@ -97,6 +97,20 @@ fn days_until_next_season(date: DateTime<Tz>, seasons: &[Season]) -> NextSeason 
             };
         }
     }
+    // No later start this year: wrap into next year, still skipping entries
+    // for the season we are already in. In December the current season is
+    // winter and seasons[0] is winter's 1/1 entry, so without the name check
+    // the almanac would count down the days until winter... during winter.
+    for s in seasons {
+        if s.name == current.name {
+            continue;
+        }
+        let s_date = NaiveDate::from_ymd_opt(date.year() + 1, s.start.0, s.start.1).unwrap();
+        return NextSeason {
+            days: (s_date - today).num_days(),
+            label: s.label.clone(),
+        };
+    }
     let first = &seasons[0];
     let next_date = NaiveDate::from_ymd_opt(date.year() + 1, first.start.0, first.start.1).unwrap();
     NextSeason {
@@ -415,13 +429,15 @@ fn build_season_nav(active: &Season, data: &SiteData) -> String {
     for name in &data.seasons_order {
         let s = &data.seasons_by_name[name];
         let cls = if s.name == active.name {
-            " class=\"active\" aria-current=\"true\""
+            " class=\"active\" aria-current=\"page\""
         } else {
             ""
         };
+        // Real hrefs so the nav works without JS (the click handler
+        // intercepts and swaps content in place when JS is available).
         out.push_str(&format!(
-            "<a data-season=\"{}\"{cls}>{}</a>",
-            s.name, s.label
+            "<a href=\"/?season={}\" data-season=\"{}\"{cls}>{}</a>",
+            s.name, s.name, s.label
         ));
     }
     out

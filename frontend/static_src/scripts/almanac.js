@@ -34,7 +34,7 @@
     var m = date.getMonth() + 1;
     var d = date.getDate();
     var ranges = [
-      ['winter',       1,1,   2,28],
+      ['winter',       1,1,   2,29],
       ['early-spring', 3,1,   4,15],
       ['late-spring',  4,16,  5,31],
       ['early-summer', 6,1,   6,30],
@@ -267,7 +267,8 @@
 
   function bindNavClicks() {
     dom.seasonsNav.querySelectorAll('a[data-season]').forEach(function (a) {
-      a.addEventListener('click', function () {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
         var season = a.getAttribute('data-season');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         loadContent(season === naturalSeason ? null : season);
@@ -291,23 +292,30 @@
   revealWords(dom.footer);
   bindNavClicks();
 
-  // refresh on season rollover; keep palette in sync with the clock
+  // refresh on day rollover (sun, moon, and the day-seeded picks all change
+  // at midnight, not just at season boundaries); keep palette in sync with
+  // the clock
+  var currentDay = now.toDateString();
   setInterval(function () {
     var check = new Date();
     var newSeason = getSeasonName(check);
     if (newSeason !== naturalSeason) {
       naturalSeason = newSeason;
-      if (!currentSeasonOverride) {
-        loadContent(null);
-        return;
-      }
+    }
+    if (check.toDateString() !== currentDay) {
+      currentDay = check.toDateString();
+      loadContent(currentSeasonOverride);
+      return;
     }
     applyDaylightCycle(getTimeOfDay(check), document.body.getAttribute('data-season') || newSeason);
   }, 60000);
 
-  // register service worker for offline access
+  // unregister the retired service worker so returning visitors stop
+  // serving the page from a stale cache
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/sw.js');
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (r) { r.unregister(); });
+    });
   }
 
 })();

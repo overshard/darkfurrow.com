@@ -5,7 +5,10 @@ pub struct AppError(pub StatusCode, pub String);
 
 impl<E: std::fmt::Display> From<E> for AppError {
     fn from(e: E) -> Self {
-        AppError(StatusCode::INTERNAL_SERVER_ERROR, format!("internal error: {e}"))
+        // Log the detail, serve a generic body: template and IO error strings
+        // can leak paths and internals to the client.
+        tracing::error!("internal error: {e}");
+        AppError(StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string())
     }
 }
 

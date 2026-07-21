@@ -2,7 +2,7 @@
 name: winter
 label: winter
 start: 1/1
-end: 2/28
+end: 2/29
 start-alt: 12/1
 end-alt: 12/31
 ---

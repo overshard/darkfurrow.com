@@ -313,8 +313,12 @@ pub fn sun_times(local_date: DateTime<Tz>) -> SunTimes {
 }
 
 pub fn format_hm(hours: f64) -> String {
-    let h = hours.trunc() as i64;
-    let m = ((hours - h as f64) * 60.0).round() as i64;
+    let mut h = hours.trunc() as i64;
+    let mut m = ((hours - h as f64) * 60.0).round() as i64;
+    if m == 60 {
+        h += 1;
+        m = 0;
+    }
     format!("{h}h {m}m")
 }
 
