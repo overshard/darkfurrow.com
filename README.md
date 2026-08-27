@@ -1,5 +1,22 @@
 # Dark Furrow
 
+> ## ⚠️ Archived, and the domain is gone
+>
+> **This project is archived and no longer maintained.** It receives no further updates,
+> fixes, or security patches.
+>
+> **I no longer own `darkfurrow.com`.** The site has been taken down and the DNS records
+> removed. That domain may already have been registered by somebody else, and anything served
+> there now has no connection to this project or to me. Do not assume a site at that address is
+> this code, and do not send anyone there expecting to find this.
+>
+> **Use at your own risk.** If you run this yourself, read it first and understand what it does.
+> Note in particular that `templates/index.html` still hardcodes `https://darkfurrow.com` in its
+> canonical link and its Open Graph and Twitter card tags. Change those to your own domain before
+> deploying, or you will be handing your search ranking and your social previews to whoever owns
+> that domain now.
+
+
 The earth remembers what we forgot.
 
 A living almanac of seasons, soil, and the quiet knowledge that used to be common.
