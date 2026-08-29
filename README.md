@@ -1,4 +1,4 @@
-> **Archived.** This project is no longer in use and no longer maintained.
+> **Archived.** This project is no longer in use and no longer maintained. Last updated July 2026.
 > I no longer own `darkfurrow.com`, so anything served there is unrelated to this code.
 > `templates/index.html` still hardcodes that domain in its canonical and social tags.
 
